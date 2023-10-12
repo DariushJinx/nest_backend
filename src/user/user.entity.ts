@@ -28,4 +28,7 @@ export class UserEntity {
   async hashPassword() {
     this.password = await hash(this.password, 10);
   }
+
+  @Column({ default: 'USER' })
+  role: string;
 }
