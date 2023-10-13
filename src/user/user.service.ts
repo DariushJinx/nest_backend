@@ -106,6 +106,12 @@ export class UserService {
     return user;
   }
 
+  async findByID(id: number): Promise<UserEntity> {
+    return await this.userRepository.findOne({
+      where: { id: id },
+    });
+  }
+
   generateJwtToken(user: UserEntity): string {
     const options = {
       expiresIn: '30d',
