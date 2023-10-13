@@ -1,5 +1,12 @@
 import { hash } from 'bcrypt';
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BlogEntity } from '../blog/blog.entity';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -31,4 +38,16 @@ export class UserEntity {
 
   @Column({ default: 'USER' })
   role: string;
+
+  @OneToMany(() => BlogEntity, (blog) => blog.author)
+  blogs: BlogEntity[];
+
+  @OneToMany(() => BlogEntity, (blog) => blog.likes)
+  likes: BlogEntity[];
+
+  @OneToMany(() => BlogEntity, (blog) => blog.dislikes)
+  dislikes: BlogEntity[];
+
+  @OneToMany(() => BlogEntity, (blog) => blog.bookmarks)
+  bookmarks: BlogEntity[];
 }
