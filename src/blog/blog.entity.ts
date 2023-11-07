@@ -28,20 +28,16 @@ export class BlogEntity {
   @Column('simple-array')
   tags: string[];
 
-  @ManyToOne(() => CategoryEntity, (category) => category.id, { eager: true })
+  @ManyToOne(() => CategoryEntity, (category) => category.blogs, {
+    eager: true,
+  })
   category: CategoryEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.blogs, { eager: true })
   author: UserEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.likes, { eager: true })
-  likes: UserEntity;
-
-  @ManyToOne(() => UserEntity, (user) => user.dislikes, { eager: true })
-  dislikes: UserEntity;
-
-  @ManyToOne(() => UserEntity, (user) => user.bookmarks, { eager: true })
-  bookmarks: UserEntity;
+  @Column({ default: 0 })
+  favoritesCount: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
