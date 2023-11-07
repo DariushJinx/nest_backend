@@ -1,19 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './blog.entity';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { CreateBlogDto } from './dto/blog.dto';
 import slugify from 'slugify';
 import { BlogResponseInterface } from './types/blogResponse.interface';
-import { FunctionUtils } from 'src/utils/functions.utils';
+import { FunctionUtils } from '../utils/functions.utils';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
+import { UpdateBlogDto } from './dto/updateBlog.dto';
 
 @Injectable()
 export class BlogService {
   constructor(
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async createBlog(
@@ -28,6 +31,7 @@ export class BlogService {
     );
     Object.assign(blog, createBlogDto);
     blog.author = currentUser;
+    delete blog.author.password;
     blog.slug = this.getSlug(createBlogDto.title);
     return await this.blogRepository.save({
       ...blog,
@@ -44,9 +48,132 @@ export class BlogService {
       .createQueryBuilder('blog')
       .leftJoinAndSelect('blog.author', 'author');
 
+    if (query.search) {
+      queryBuilder.andWhere('blog.tags LIKE :search', {
+        search: `%${query.search}`,
+      });
+    }
+
+    if (query.tag) {
+      queryBuilder.andWhere('blog.tags LIKE :tag', {
+        tag: `%${query.tag}`,
+      });
+    }
+
+    if (query.author) {
+      const author = await this.userRepository.findOne({
+        where: { username: query.author },
+      });
+      queryBuilder.andWhere('blog.authorId = :id', {
+        id: author.id,
+      });
+    }
+
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+
+    queryBuilder.orderBy('blog.createdAt', 'DESC');
+
     const blogsCount = await queryBuilder.getCount();
     const blogs = await queryBuilder.getMany();
     return { blogs, blogsCount };
+  }
+
+  async getOneBlogWithSlug(slug: string): Promise<BlogEntity> {
+    return await this.blogRepository.findOne({
+      where: { slug: slug },
+    });
+  }
+
+  async getOneBlogWithID(id: number): Promise<BlogEntity> {
+    return await this.blogRepository.findOne({
+      where: { id: id },
+    });
+  }
+
+  async deleteOneBlogWithSlug(slug: string): Promise<DeleteResult> {
+    const blog = await this.getOneBlogWithSlug(slug);
+    if (!blog) {
+      throw new HttpException('مقاله مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
+    if (blog.author.role !== 'ADMIN') {
+      throw new HttpException(
+        'شما مجاز به حذف مقاله نیستید',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return await this.blogRepository.delete({ slug });
+  }
+
+  async updateBlog(
+    id: number,
+    currentUserID: number,
+    updateBlogDto: UpdateBlogDto,
+  ) {
+    const blog = await this.getOneBlogWithID(id);
+
+    if (!blog) {
+      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    if (blog.author.id !== currentUserID) {
+      throw new HttpException('you are not an author', HttpStatus.FORBIDDEN);
+    }
+
+    Object.assign(blog, updateBlogDto);
+
+    return await this.blogRepository.save(blog);
+  }
+
+  async favoriteBlog(blogId: number, currentUser: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: currentUser },
+      relations: ['favorites'],
+    });
+    const blog = await this.getOneBlogWithID(blogId);
+
+    const isNotFavorite =
+      user.favorites.findIndex(
+        (blogInFavorite) => blogInFavorite.id === blog.id,
+      ) === -1;
+
+    if (isNotFavorite) {
+      user.favorites.push(blog);
+      blog.favoritesCount++;
+      await this.userRepository.save(user);
+      await this.blogRepository.save(blog);
+    }
+
+    return blog;
+  }
+
+  async deleteBlogFromFavorite(blogId: number, currentUser: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: currentUser },
+      relations: ['favorites'],
+    });
+    const blog = await this.getOneBlogWithID(blogId);
+
+    const blogIndex = user.favorites.findIndex(
+      (blogInFavorite) => blogInFavorite.id === blog.id,
+    );
+
+    if (blogIndex >= 0) {
+      user.favorites.splice(blogIndex, 1);
+      if (blog.favoritesCount < 0) {
+        blog.favoritesCount = 0;
+      }
+      blog.favoritesCount--;
+      await this.userRepository.save(user);
+      await this.blogRepository.save(blog);
+    }
+    return blog;
   }
 
   async buildBlogResponse(blog: BlogEntity): Promise<BlogResponseInterface> {
