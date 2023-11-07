@@ -135,4 +135,13 @@ export class UserService {
       },
     };
   }
+
+  async buildUserResponses(user: UserEntity) {
+    delete user.password;
+    return {
+      user: {
+        ...user,
+      },
+    };
+  }
 }
