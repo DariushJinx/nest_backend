@@ -6,6 +6,10 @@ import { UserModule } from './user/user.module';
 import { CategoryModule } from './category/category.module';
 import { BlogModule } from './blog/blog.module';
 import { AuthMiddleware } from './user/middlewares/auth.middleware';
+import { ProductModule } from './product/product.module';
+import { FeatureModule } from './features/feature.module';
+import { ProfileModule } from './profile/profile.module';
+import { CourseModule } from './course/course.module';
 
 @Module({
   imports: [
@@ -21,6 +25,10 @@ import { AuthMiddleware } from './user/middlewares/auth.middleware';
     UserModule,
     CategoryModule,
     BlogModule,
+    ProductModule,
+    FeatureModule,
+    ProfileModule,
+    CourseModule,
   ],
   controllers: [],
   providers: [],
