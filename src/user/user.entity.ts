@@ -4,9 +4,13 @@ import {
   BeforeInsert,
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ProductEntity } from '../product/product.entity';
+import { CourseEntity } from '../course/course.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -42,12 +46,22 @@ export class UserEntity {
   @OneToMany(() => BlogEntity, (blog) => blog.author)
   blogs: BlogEntity[];
 
-  @OneToMany(() => BlogEntity, (blog) => blog.likes)
-  likes: BlogEntity[];
+  @OneToMany(() => ProductEntity, (product) => product.supplier)
+  products: ProductEntity[];
 
-  @OneToMany(() => BlogEntity, (blog) => blog.dislikes)
-  dislikes: BlogEntity[];
+  @OneToMany(() => CourseEntity, (course) => course.teacher)
+  courses: CourseEntity[];
 
-  @OneToMany(() => BlogEntity, (blog) => blog.bookmarks)
-  bookmarks: BlogEntity[];
+  // این منی تو منی میاد یه ریلشن بین یوزرز و بلاگ میسازه که در این صورت یه تیبل جداگونه به این دوتا اختصاص داده میشه که دقیقا هم اسم این دو مورد استفاده شده می باشد و هر جای دیگه ای هم استفاده بشه دقیقا هم اسمشون رو میسازه
+  @ManyToMany(() => BlogEntity)
+  @JoinTable()
+  favorites: BlogEntity[];
+
+  @ManyToMany(() => ProductEntity)
+  @JoinTable()
+  favoritesProducts: ProductEntity[];
+
+  @ManyToMany(() => CourseEntity)
+  @JoinTable()
+  favoriteCourses: CourseEntity[];
 }
