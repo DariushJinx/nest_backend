@@ -32,8 +32,8 @@ export class AuthMiddleware implements NestMiddleware {
               HttpStatus.UNAUTHORIZED,
             );
           } else {
-            const { id } = payload;
-            const user = await this.userService.findByID(id);
+            const { email } = payload;
+            const user = await this.userService.findByEmail(email);
             if (!user) {
               throw new HttpException(
                 'وارد حساب کاربری خود شوید...',
