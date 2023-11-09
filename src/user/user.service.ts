@@ -112,6 +112,12 @@ export class UserService {
     });
   }
 
+  async findByEmail(email: string): Promise<UserEntity> {
+    return await this.userRepository.findOne({
+      where: { email: email },
+    });
+  }
+
   generateJwtToken(user: UserEntity): string {
     const options = {
       expiresIn: '30d',
