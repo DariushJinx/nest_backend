@@ -5,11 +5,11 @@ import { UserEntity } from '../user/user.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import { ProductResponseInterface } from './types/productResponse.interface';
 import { CreateProductDto } from './dto/product.dto';
-import { FunctionUtils } from 'src/utils/functions.utils';
+import { FunctionUtils } from '../utils/functions.utils';
 import slugify from 'slugify';
 import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { UpdateProductDto } from './dto/updateProduct.dto';
-import { FeatureEntity } from 'src/features/feature.entity';
+import { FeatureEntity } from '../features/feature.entity';
 
 @Injectable()
 export class ProductService {
