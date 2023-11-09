@@ -1,6 +1,14 @@
+import { ChapterEntity } from '../chapter/chapter.entity';
 import { CategoryEntity } from '../category/category.entity';
 import { UserEntity } from '../user/user.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'course' })
 export class CourseEntity {
@@ -42,6 +50,10 @@ export class CourseEntity {
     enum: ['not_started', 'completed', 'holding'],
   })
   status: string;
+
+  @ManyToMany(() => ChapterEntity)
+  @JoinTable()
+  chapters: ChapterEntity[];
 
   @ManyToOne(() => CategoryEntity, (category) => category.courses, {
     eager: true,
