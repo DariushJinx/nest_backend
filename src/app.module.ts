@@ -10,6 +10,7 @@ import { ProductModule } from './product/product.module';
 import { FeatureModule } from './features/feature.module';
 import { ProfileModule } from './profile/profile.module';
 import { CourseModule } from './course/course.module';
+import { ChapterModule } from './chapter/chapter.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CourseModule } from './course/course.module';
     FeatureModule,
     ProfileModule,
     CourseModule,
+    ChapterModule,
   ],
   controllers: [],
   providers: [],
