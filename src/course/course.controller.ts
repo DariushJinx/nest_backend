@@ -37,11 +37,13 @@ export class CourseController {
     @User() currentUser: UserEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() createCourseDto: CreateCourseDto,
+    @Body('chapterIds') chapterIds: number[],
   ) {
     const course = await this.courseService.createCourse(
       currentUser,
       createCourseDto,
       files,
+      chapterIds,
     );
     return await this.courseService.buildCourseResponse(course);
   }
