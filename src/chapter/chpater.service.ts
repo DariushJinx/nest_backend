@@ -7,6 +7,7 @@ import { CreateChapterDto } from './dto/createChpater.dto';
 import { ChapterResponseInterface } from './types/chpaterResponse.interface';
 import { CourseEntity } from '../course/course.entity';
 import { ChaptersResponseInterface } from './types/chaptersResponse.interface';
+import { UpdateChapterDto } from './dto/updateChapter.dto';
 
 @Injectable()
 export class ChapterService {
@@ -76,6 +77,29 @@ export class ChapterService {
     }
 
     return await this.chapterRepository.delete({ id });
+  }
+
+  async updateChapter(
+    id: number,
+    currentUserID: number,
+    updateChapterDto: UpdateChapterDto,
+  ) {
+    const chapter = await this.currentChapter(id);
+
+    if (!chapter) {
+      throw new HttpException('chapter does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    if (chapter.user_id !== currentUserID) {
+      throw new HttpException(
+        'شما مجاز به تغییر فصل نیستید',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    Object.assign(chapter, updateChapterDto);
+
+    return await this.chapterRepository.save(chapter);
   }
 
   async buildChapterResponse(
