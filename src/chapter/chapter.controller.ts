@@ -8,6 +8,7 @@ import {
   UsePipes,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { ChapterService } from './chpater.service';
 import { AuthGuard } from 'src/user/guard/auth.guard';
@@ -18,6 +19,7 @@ import { CreateChapterDto } from './dto/createChpater.dto';
 import { ChaptersResponseInterface } from './types/chaptersResponse.interface';
 import { ChapterResponseInterface } from './types/chpaterResponse.interface';
 import { DeleteResult } from 'typeorm';
+import { UpdateChapterDto } from './dto/updateChapter.dto';
 
 @Controller('chapter')
 export class ChapterController {
@@ -60,5 +62,21 @@ export class ChapterController {
     @User() user: UserEntity,
   ): Promise<DeleteResult> {
     return await this.chapterService.deleteOneChapterWithID(id, user);
+  }
+
+  @Put(':id')
+  @UseGuards(AuthGuard)
+  @UsePipes(new BackendValidationPipe())
+  async updateOneChapterWithId(
+    @Param('id') id: number,
+    @User('id') currentUserID: number,
+    @Body('') updateChapterDto: UpdateChapterDto,
+  ): Promise<ChapterResponseInterface> {
+    const chapter = await this.chapterService.updateChapter(
+      id,
+      currentUserID,
+      updateChapterDto,
+    );
+    return await this.chapterService.buildChapterResponse(chapter);
   }
 }
