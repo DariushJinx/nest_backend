@@ -31,10 +31,12 @@ export class ChapterController {
   async createChapter(
     @User() user: UserEntity,
     @Body() createChapterDto: CreateChapterDto,
+    @Body('episodeIds') episodeIds: number[],
   ) {
     const chapter = await this.chapterService.createChapter(
       createChapterDto,
       user,
+      episodeIds,
     );
     return await this.chapterService.buildChapterResponse(chapter);
   }
