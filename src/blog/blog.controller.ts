@@ -11,6 +11,7 @@ import {
   Param,
   Delete,
   Put,
+  Res,
 } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { User } from '../decorators/user.decorators';
@@ -24,6 +25,8 @@ import { AuthGuard } from '../user/guard/auth.guard';
 import { DeleteResult } from 'typeorm';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
+import { join } from 'path';
+import { of } from 'rxjs';
 
 @Controller('blog')
 export class BlogController {
@@ -60,6 +63,13 @@ export class BlogController {
   ): Promise<BlogResponseInterface> {
     const blog = await this.blogService.getOneBlogWithSlug(slug);
     return await this.blogService.buildBlogResponse(blog);
+  }
+
+  @Get(':imageName')
+  findImage(@Param('imageName') imageName: string, @Res() res) {
+    return of(
+      res.sendFile(join(process.cwd(), 'public', 'uploads', imageName)),
+    );
   }
 
   @Delete(':slug')
