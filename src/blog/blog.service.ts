@@ -29,6 +29,8 @@ export class BlogService {
       files,
       createBlogDto.fileUploadPath,
     );
+    delete createBlogDto.fileUploadPath;
+    delete createBlogDto.filename;
     Object.assign(blog, createBlogDto);
     blog.author = currentUser;
     delete blog.author.password;
