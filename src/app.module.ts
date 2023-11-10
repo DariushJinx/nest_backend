@@ -11,6 +11,7 @@ import { FeatureModule } from './features/feature.module';
 import { ProfileModule } from './profile/profile.module';
 import { CourseModule } from './course/course.module';
 import { ChapterModule } from './chapter/chapter.module';
+import { EpisodeModule } from './episode/episode.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ChapterModule } from './chapter/chapter.module';
     ProfileModule,
     CourseModule,
     ChapterModule,
+    EpisodeModule,
   ],
   controllers: [],
   providers: [],
