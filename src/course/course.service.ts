@@ -2,13 +2,14 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CourseEntity } from './course.entity';
 import { DeleteResult, Repository } from 'typeorm';
-import { UserEntity } from 'src/user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { CreateCourseDto } from './dto/course.dto';
-import { FunctionUtils } from 'src/utils/functions.utils';
+import { FunctionUtils } from '../utils/functions.utils';
 import slugify from 'slugify';
 import { CourseResponseInterface } from './types/courseResponse.interface';
 import { CoursesResponseInterface } from './types/coursesResponse.interface';
 import { UpdateCourseDto } from './dto/updateCourse.dto';
+import { ChapterEntity } from '../chapter/chapter.entity';
 
 @Injectable()
 export class CourseService {
@@ -17,13 +18,17 @@ export class CourseService {
     private readonly courseRepository: Repository<CourseEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(ChapterEntity)
+    private readonly chapterRepository: Repository<ChapterEntity>,
   ) {}
 
   async createCourse(
     currentUser: UserEntity,
     createCourseDto: CreateCourseDto,
     files: Express.Multer.File[],
+    chapterIds: number[],
   ): Promise<CourseEntity> {
+    const chapters = await this.chapterRepository.findByIds(chapterIds);
     const course = new CourseEntity();
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
@@ -31,6 +36,7 @@ export class CourseService {
     );
     Object.assign(course, createCourseDto);
     course.teacher = currentUser;
+    course.chapters = chapters;
     if (Number(createCourseDto.price) > 0 && createCourseDto.type === 'free') {
       throw new HttpException(
         'برای دوره ی رایگان نمیتوان قیمت ثبت کرد',
