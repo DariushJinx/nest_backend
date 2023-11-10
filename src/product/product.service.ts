@@ -34,6 +34,8 @@ export class ProductService {
       files,
       createProductDto.fileUploadPath,
     );
+    delete createProductDto.fileUploadPath;
+    delete createProductDto.filename;
     Object.assign(product, createProductDto);
     product.supplier = currentUser;
     delete product.supplier.password;
@@ -121,7 +123,9 @@ export class ProductService {
     id: number,
     currentUserID: number,
     updateProductDto: UpdateProductDto,
+    featureIds: number[],
   ) {
+    const features = await this.featureRepository.findByIds(featureIds);
     const product = await this.getOneProductWithID(id);
 
     if (!product) {
@@ -133,6 +137,7 @@ export class ProductService {
     }
 
     Object.assign(product, updateProductDto);
+    product.features = features;
 
     return await this.productRepository.save(product);
   }
