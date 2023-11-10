@@ -8,6 +8,7 @@ import { ChapterResponseInterface } from './types/chpaterResponse.interface';
 import { CourseEntity } from '../course/course.entity';
 import { ChaptersResponseInterface } from './types/chaptersResponse.interface';
 import { UpdateChapterDto } from './dto/updateChapter.dto';
+import { EpisodeEntity } from 'src/episode/episode.entity';
 
 @Injectable()
 export class ChapterService {
@@ -18,15 +19,20 @@ export class ChapterService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(CourseEntity)
     private readonly courseRepository: Repository<CourseEntity>,
+    @InjectRepository(EpisodeEntity)
+    private readonly episodeRepository: Repository<EpisodeEntity>,
   ) {}
 
   async createChapter(
     createChapterDto: CreateChapterDto,
     user: UserEntity,
+    episodeIds: number[],
   ): Promise<ChapterEntity> {
+    const episodes = await this.episodeRepository.findByIds(episodeIds);
     const chapter = new ChapterEntity();
     Object.assign(chapter, createChapterDto);
     chapter.user_id = user.id;
+    chapter.episodes = episodes;
     return await this.chapterRepository.save(chapter);
   }
 
@@ -54,6 +60,7 @@ export class ChapterService {
   async currentChapter(id: number) {
     return await this.chapterRepository.findOne({
       where: { id: id },
+      relations: ['episodes'],
     });
   }
 
