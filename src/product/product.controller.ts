@@ -78,11 +78,13 @@ export class ProductController {
     @Param('id') id: number,
     @User('id') currentUserID: number,
     @Body('') updateProductDto: UpdateProductDto,
+    @Body('featureIds') featureIds: number[],
   ): Promise<ProductResponseInterface> {
     const product = await this.productService.updateProduct(
       id,
       currentUserID,
       updateProductDto,
+      featureIds,
     );
     return await this.productService.buildProductResponse(product);
   }
