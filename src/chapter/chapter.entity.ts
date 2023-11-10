@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { EpisodeEntity } from '../episode/episode.entity';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'chapter' })
 export class ChapterEntity {
@@ -13,6 +20,10 @@ export class ChapterEntity {
 
   @Column()
   user_id: number;
+
+  @ManyToMany(() => EpisodeEntity)
+  @JoinTable()
+  chapters: EpisodeEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
