@@ -5,10 +5,16 @@ import { ChapterEntity } from './chapter.entity';
 import { ChapterController } from './chapter.controller';
 import { ChapterService } from './chpater.service';
 import { CourseEntity } from '../course/course.entity';
+import { EpisodeEntity } from 'src/episode/episode.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChapterEntity, UserEntity, CourseEntity]),
+    TypeOrmModule.forFeature([
+      ChapterEntity,
+      UserEntity,
+      CourseEntity,
+      EpisodeEntity,
+    ]),
   ],
   controllers: [ChapterController],
   providers: [ChapterService],
