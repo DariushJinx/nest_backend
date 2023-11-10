@@ -48,6 +48,9 @@ export class ProductEntity {
   @Column('simple-array')
   colors: string[];
 
+  @Column('simple-array')
+  featureIds: string[];
+
   @ManyToMany(() => FeatureEntity)
   @JoinTable()
   features: FeatureEntity[];
