@@ -23,7 +23,7 @@ export class ChapterEntity {
 
   @ManyToMany(() => EpisodeEntity)
   @JoinTable()
-  chapters: EpisodeEntity[];
+  episodes: EpisodeEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
