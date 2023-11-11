@@ -25,7 +25,7 @@
     "migration:revert": "npm run typeorm -- -d ./src/ormconfig.ts migration:revert",
     "tables:drop": "npm run typeorm -- -d ./src/ormconfig.ts schema:drop",
     "db:seed": "npm run typeorm -- -d ./src/ormseedconfig.ts migration:run",
-    "create:db" : "node ./src/createDB/createDB.ts"
+    "create:db": "node ./src/createDB/createDB.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
