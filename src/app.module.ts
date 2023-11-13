@@ -12,6 +12,7 @@ import { ProfileModule } from './profile/profile.module';
 import { CourseModule } from './course/course.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { EpisodeModule } from './episode/episode.module';
+import { OffModule } from './off/off.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EpisodeModule } from './episode/episode.module';
     CourseModule,
     ChapterModule,
     EpisodeModule,
+    OffModule,
   ],
   controllers: [],
   providers: [],
