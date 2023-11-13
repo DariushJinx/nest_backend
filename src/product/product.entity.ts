@@ -6,9 +6,11 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
+import { OffEntity } from '../off/off.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -62,6 +64,9 @@ export class ProductEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.products, { eager: true })
   supplier: UserEntity;
+
+  @OneToMany(() => OffEntity, (off) => off.id, { eager: true })
+  offs: OffEntity[];
 
   @Column({ default: 0 })
   favoritesCount: number;
