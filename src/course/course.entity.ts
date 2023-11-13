@@ -7,8 +7,10 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { OffEntity } from '../off/off.entity';
 
 @Entity({ name: 'course' })
 export class CourseEntity {
@@ -62,6 +64,9 @@ export class CourseEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.courses, { eager: true })
   teacher: UserEntity;
+
+  @OneToMany(() => OffEntity, (off) => off.id)
+  offs: OffEntity[];
 
   @Column({ default: 0 })
   favoritesCount: number;
