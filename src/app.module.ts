@@ -14,6 +14,8 @@ import { ChapterModule } from './chapter/chapter.module';
 import { EpisodeModule } from './episode/episode.module';
 import { OffModule } from './off/off.module';
 import { CourseModule_2 } from './course_2/course_2.module';
+import { ChapterModule_2 } from './chapter_2/chapter_2.module';
+import { EpisodeModule_2 } from './episode_2/episode_2.module';
 
 @Module({
   imports: [
@@ -35,7 +37,9 @@ import { CourseModule_2 } from './course_2/course_2.module';
     CourseModule,
     CourseModule_2,
     ChapterModule,
+    ChapterModule_2,
     EpisodeModule,
+    EpisodeModule_2,
     OffModule,
   ],
   controllers: [],
