@@ -12,6 +12,7 @@ import {
 import { ProductEntity } from '../product/product.entity';
 import { CourseEntity } from '../course/course.entity';
 import { OffEntity } from '../off/off.entity';
+import { CourseEntity_2 } from '../course_2/course_2.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -68,4 +69,8 @@ export class UserEntity {
   @ManyToMany(() => CourseEntity)
   @JoinTable()
   favoriteCourses: CourseEntity[];
+
+  @ManyToMany(() => CourseEntity_2)
+  @JoinTable()
+  favoriteCourses_2: CourseEntity_2[];
 }
