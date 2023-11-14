@@ -13,6 +13,7 @@ import { CourseModule } from './course/course.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { EpisodeModule } from './episode/episode.module';
 import { OffModule } from './off/off.module';
+import { CourseModule_2 } from './course_2/course_2.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { OffModule } from './off/off.module';
     FeatureModule,
     ProfileModule,
     CourseModule,
+    CourseModule_2,
     ChapterModule,
     EpisodeModule,
     OffModule,
