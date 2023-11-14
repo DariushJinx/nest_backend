@@ -103,9 +103,16 @@ export class CourseService_2 {
   async currentCourse(id: number) {
     const course = await this.courseRepository.findOne({
       where: { id: id },
+      relations: ['chapters', 'chapters.episodes'],
     });
 
     delete course.teacher.password;
+    course.chapters.map((chapter) => delete chapter.course_id);
+    course.chapters.map((chapter) =>
+      chapter.episodes.map((episode) => {
+        delete episode.chapter_id;
+      }),
+    );
     return course;
   }
 
