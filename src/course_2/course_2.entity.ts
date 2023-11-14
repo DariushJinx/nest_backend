@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OffEntity } from '../off/off.entity';
+import { ChapterEntity_2 } from '../chapter_2/chapter_2.entity';
 
 @Entity({ name: 'course_2' })
 export class CourseEntity_2 {
@@ -54,6 +55,9 @@ export class CourseEntity_2 {
     eager: true,
   })
   category: CategoryEntity;
+
+  @OneToMany(() => ChapterEntity_2, (chapter) => chapter.course_id)
+  chapters: ChapterEntity_2[];
 
   @ManyToOne(() => UserEntity, (user) => user.courses, { eager: true })
   teacher: UserEntity;
