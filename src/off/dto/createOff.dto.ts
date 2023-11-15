@@ -8,7 +8,7 @@ export class CreateOffDto {
   @IsDefined({ message: 'عنوان کوتاه ارسالی محصول یافت نشد' })
   @Expose()
   @Length(0, 100, { message: 'درصد تخفیف ارسالی صحیح نمی باشد' })
-  percent: string;
+  percent: number;
   @IsOptional()
   @Expose()
   product_id: number;
