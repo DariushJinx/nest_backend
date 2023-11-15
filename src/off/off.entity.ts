@@ -13,16 +13,18 @@ export class OffEntity {
   percent: number;
 
   @Column()
-  max: string;
+  max: number;
 
   @Column()
-  uses: string;
+  uses: number;
 
   @ManyToOne(() => UserEntity, (user) => user.offs, { eager: true })
   creator: UserEntity;
 
+  @Column({ nullable: true })
   course_id: number;
 
+  @Column({ nullable: true })
   product_id: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
