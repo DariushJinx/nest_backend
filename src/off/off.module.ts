@@ -5,15 +5,15 @@ import { OffService } from './off.service';
 import { OffEntity } from './off.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { ProductEntity } from 'src/product/product.entity';
-import { CourseEntity } from 'src/course/course.entity';
+import { CourseEntity_2 } from 'src/course_2/course_2.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      OffEntity,
-      UserEntity,
       ProductEntity,
-      CourseEntity,
+      UserEntity,
+      CourseEntity_2,
+      OffEntity,
     ]),
   ],
   controllers: [OffController],
