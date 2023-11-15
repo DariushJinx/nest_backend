@@ -65,7 +65,7 @@ export class ProductEntity {
   @ManyToOne(() => UserEntity, (user) => user.products, { eager: true })
   supplier: UserEntity;
 
-  @OneToMany(() => OffEntity, (off) => off.id, { eager: true })
+  @OneToMany(() => OffEntity, (off) => off.id)
   offs: OffEntity[];
 
   @Column({ default: 0 })
