@@ -1,6 +1,13 @@
+import { CommentEntity } from '../comment/comment.entity';
 import { CategoryEntity } from '../category/category.entity';
 import { UserEntity } from '../user/user.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'blog' })
 export class BlogEntity {
@@ -35,6 +42,9 @@ export class BlogEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.blogs, { eager: true })
   author: UserEntity;
+
+  @OneToMany(() => CommentEntity, (comment) => comment.blog_id)
+  comments: CommentEntity[];
 
   @Column({ default: 0 })
   favoritesCount: number;
