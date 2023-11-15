@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { OffEntity } from '../off/off.entity';
 import { ChapterEntity_2 } from '../chapter_2/chapter_2.entity';
+import { CommentEntity } from '../comment/comment.entity';
 
 @Entity({ name: 'course_2' })
 export class CourseEntity_2 {
@@ -64,6 +65,9 @@ export class CourseEntity_2 {
 
   @OneToMany(() => OffEntity, (off) => off.id)
   offs: OffEntity[];
+
+  @OneToMany(() => CommentEntity, (comment) => comment.course_id)
+  comments: CommentEntity[];
 
   @Column({ default: 0 })
   favoritesCount: number;
