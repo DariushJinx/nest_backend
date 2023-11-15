@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { OffEntity } from '../off/off.entity';
+import { CommentEntity } from '../comment/comment.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -56,6 +57,9 @@ export class ProductEntity {
   @ManyToMany(() => FeatureEntity)
   @JoinTable()
   features: FeatureEntity[];
+
+  @OneToMany(() => CommentEntity, (comment) => comment.product_id)
+  comments: CommentEntity[];
 
   @ManyToOne(() => CategoryEntity, (category) => category.products, {
     eager: true,
