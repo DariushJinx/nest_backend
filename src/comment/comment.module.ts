@@ -6,10 +6,12 @@ import { CommentController } from './comment.controller';
 import { CommentService } from './comment.service';
 import { ProductEntity } from '../product/product.entity';
 import { BlogEntity } from '../blog/blog.entity';
+import { CommentEntity } from './comment.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      CommentEntity,
       UserEntity,
       CourseEntity_2,
       ProductEntity,
