@@ -89,6 +89,7 @@ export class BlogService {
   async getOneBlogWithSlug(slug: string): Promise<BlogEntity> {
     return await this.blogRepository.findOne({
       where: { slug: slug },
+      relations: ['comments'],
     });
   }
 
