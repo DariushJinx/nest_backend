@@ -2,6 +2,7 @@ import { CourseEntity_2 } from '../course_2/course_2.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ProductEntity } from '../product/product.entity';
 import { BlogEntity } from '../blog/blog.entity';
+import { UserEntity } from '../user/user.entity';
 
 @Entity({ name: 'comment' })
 export class CommentEntity {
@@ -34,6 +35,11 @@ export class CommentEntity {
     eager: true,
   })
   blog_id: BlogEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.comments, {
+    eager: true,
+  })
+  user_id: UserEntity;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
