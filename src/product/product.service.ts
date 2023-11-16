@@ -190,7 +190,7 @@ export class ProductService {
   async currentProduct(id: number) {
     const product = await this.productRepository.findOne({
       where: { id: id },
-      relations: ['features'],
+      relations: ['features', 'comments'],
     });
 
     delete product.supplier.password;
