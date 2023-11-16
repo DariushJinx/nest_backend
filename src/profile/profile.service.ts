@@ -20,7 +20,12 @@ export class ProfileService {
   ): Promise<ProfileType> {
     const user = await this.userRepository.findOne({
       where: { username: profileUsername },
-      relations: ['favorites', 'favoritesProducts', 'favoriteCourses'],
+      relations: [
+        'favorites',
+        'favoritesProducts',
+        'favoriteCourses',
+        'comments',
+      ],
     });
 
     user.favoritesProducts.map((product) => delete product.supplier.password);
