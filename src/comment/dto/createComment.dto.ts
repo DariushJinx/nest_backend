@@ -16,4 +16,8 @@ export class CreateCommentDto {
   @IsOptional()
   @Expose()
   score: number;
+  @IsOptional()
+  @Expose()
+  parent: number;
+  tree_comment: string[];
 }
