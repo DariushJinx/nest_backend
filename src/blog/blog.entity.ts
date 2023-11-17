@@ -29,6 +29,9 @@ export class BlogEntity {
   @Column()
   short_text: string;
 
+  @Column({ default: 5 })
+  blogAverageScore: number;
+
   @Column('simple-array')
   images: string[];
 
