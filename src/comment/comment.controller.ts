@@ -48,6 +48,16 @@ export class CommentController {
     return await this.commentService.findAllComments(currentUser, query);
   }
 
+  @Get('tree_comment')
+  async reIndexTreeComment(@User() currentUser: number) {
+    return await this.commentService.reIndexTreeComment(currentUser);
+  }
+
+  @Get('parents')
+  async getParents(@User() currentUser: number) {
+    return await this.commentService.getParents(currentUser);
+  }
+
   @Get(':id')
   async getOneComment(
     @Param('id') id: number,
@@ -62,12 +72,13 @@ export class CommentController {
   async updateOneCommentWithId(
     @Param('id') id: number,
     @User('id') currentUserID: number,
-    @Body('') updateCommentDto: UpdateCommentDto,
+    @Body() updateCommentDto: UpdateCommentDto,
   ): Promise<CommentResponseInterface> {
     const comment = await this.commentService.updateComment(
       id,
       currentUserID,
-      updateCommentDto,
+      updateCommentDto.comment,
+      updateCommentDto.score,
     );
     return await this.commentService.buildCommentResponse(comment);
   }
