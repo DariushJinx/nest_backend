@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { CommentResponseInterface } from './types/commentResponse.interface';
 import { CommentsResponseInterface } from './types/commentsResponse.interface';
-import { UpdateCommentDto } from './dto/updateComment.dto';
 
 @Injectable()
 export class CommentService {
@@ -34,11 +33,35 @@ export class CommentService {
     const comment = new CommentEntity();
 
     Object.assign(comment, createCommentDto);
+
     comment.user_id = currentUser;
+    comment.tree_comment = [];
 
     delete comment.user_id.password;
+    const saveComment = await this.commentRepository.save(comment);
 
-    return await this.commentRepository.save(comment);
+    const comments = await this.commentRepository.find();
+
+    comments.forEach(async (comment: any) => {
+      if (comment.parent && comment.parent !== 0) {
+        let parentCode = comment.parent.toString();
+        comment.tree_comment = [comment.id.toString(), parentCode];
+        let parent = comments.find((item) => item.id.toString() === parentCode);
+        while (parent && parent.parent !== 0) {
+          parentCode = parent.parent.toString();
+          comment.tree_comment.push(parentCode);
+          parent = comments.find((item) => item.id.toString() === parentCode);
+        }
+      } else {
+        comment.tree_comment = [comment.id.toString()];
+      }
+      await this.commentRepository.update(
+        { id: comment.id },
+        { tree_comment: comment.tree_comment },
+      );
+    });
+
+    return saveComment;
   }
 
   async findAllComments(
@@ -73,10 +96,56 @@ export class CommentService {
     return { comments, commentsCount };
   }
 
-  async buildCommentResponse(
-    comment: CommentEntity,
-  ): Promise<CommentResponseInterface> {
-    return { comment };
+  async reIndexTreeComment(currentUser: number) {
+    const queryBuilder = this.commentRepository.createQueryBuilder('comment');
+
+    queryBuilder.orderBy('comment.id', 'DESC');
+
+    const comments = await queryBuilder.getMany();
+
+    comments.forEach(async (item) => {
+      item.tree_comment = [];
+
+      if (item.parent && item.parent !== 0) {
+        let parentId = item.parent.toString();
+        const commentId = item.id.toString();
+        item.tree_comment = [commentId, parentId];
+        let parent = comments.find((li) => li.id.toString() === parentId);
+        while (parent && parent.parent !== 0) {
+          parentId = parent.parent.toString();
+          item.tree_comment.push(parentId);
+          parent = comments.find((li) => li.id.toString() === parentId);
+        }
+      } else {
+        item.tree_comment = [item.id.toString()];
+      }
+    });
+    comments.forEach(async (item) => {
+      await this.commentRepository.update(
+        { id: item.id },
+        {
+          tree_comment: item.tree_comment,
+        },
+      );
+    });
+
+    return comments;
+  }
+
+  async getParents(currentUser: number) {
+    let comments: any;
+    await this.commentRepository
+      .find({
+        where: { parent: 0 },
+      })
+      .then((data) => {
+        return data.sort((a: any, b: any) => a.id - b.id);
+      })
+      .then((finalData) => {
+        comments = finalData;
+      });
+
+    return comments;
   }
 
   async currentComment(id: number): Promise<CommentEntity> {
@@ -88,7 +157,8 @@ export class CommentService {
   async updateComment(
     id: number,
     currentUserID: number,
-    updateCommentDto: UpdateCommentDto,
+    commentCheck: string,
+    score: number,
   ) {
     const comment = await this.currentComment(id);
 
@@ -100,7 +170,7 @@ export class CommentService {
       throw new HttpException('you are not an supplier', HttpStatus.FORBIDDEN);
     }
 
-    Object.assign(comment, updateCommentDto);
+    Object.assign(comment, { commentCheck, score });
 
     return await this.commentRepository.save(comment);
   }
@@ -138,6 +208,12 @@ export class CommentService {
     );
 
     return comment;
+  }
+
+  async buildCommentResponse(
+    comment: CommentEntity,
+  ): Promise<CommentResponseInterface> {
+    return { comment };
   }
 
   async buildCommentResponses(comment: CommentEntity) {
