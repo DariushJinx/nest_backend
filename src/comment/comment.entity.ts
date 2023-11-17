@@ -18,8 +18,14 @@ export class CommentEntity {
   @Column()
   score: number;
 
+  @Column({ default: 0 })
+  parent: number;
+
   @Column({ default: true })
   openToComment: boolean;
+
+  @Column('simple-array')
+  tree_comment: string[];
 
   @ManyToOne(() => CourseEntity_2, (course) => course.comments, {
     eager: true,
