@@ -57,6 +57,11 @@ export class BlogController {
     return await this.blogService.findAllBlogs(currentUser, query);
   }
 
+  @Get('all_blogs')
+  async findAllBlogsWithRating(@User() user: UserEntity) {
+    return await this.blogService.findAllBlogsWithRating(user);
+  }
+
   @Get(':slug')
   async getOneBlogWithSlug(
     @Param('slug') slug: string,
