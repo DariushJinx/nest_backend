@@ -9,6 +9,7 @@ import { BlogResponseInterface } from './types/blogResponse.interface';
 import { FunctionUtils } from '../utils/functions.utils';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
+import { CommentEntity } from '../comment/comment.entity';
 
 @Injectable()
 export class BlogService {
@@ -17,6 +18,8 @@ export class BlogService {
     private readonly blogRepository: Repository<BlogEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
   ) {}
 
   async createBlog(
@@ -84,6 +87,40 @@ export class BlogService {
     const blogsCount = await queryBuilder.getCount();
     const blogs = await queryBuilder.getMany();
     return { blogs, blogsCount };
+  }
+
+  async findAllBlogsWithRating(user: UserEntity) {
+    const blogs = await this.blogRepository.find();
+
+    blogs.map(async (blog) => {
+      const showComment = await this.commentRepository.find({
+        where: { show: 1 },
+      });
+      let blogTotalScore: number = 5;
+      const blogScores = showComment?.filter((comment) => {
+        if (comment.blog_id.id) {
+          if (comment.blog_id.id.toString() === blog.id.toString()) {
+            return comment;
+          }
+        }
+      });
+
+      blogScores.forEach((comment) => {
+        blogTotalScore += Number(comment.score);
+      });
+      console.log('blogTotalScore:', blogTotalScore / blogScores.length + 1);
+      console.log('blogScores:', blogScores.length + 1);
+      const blogAverageScore = ~~(blogTotalScore / blogScores.length + 1);
+      blog.blogAverageScore = blogAverageScore;
+      await this.blogRepository.save(blog);
+      console.log('blog.blogAverageScore:', blog.blogAverageScore);
+      // blogs.push(blog);
+    });
+
+    return blogs;
+
+    // const comments = await this.commentRepository.find({ where: { show: 1 } });
+    // console.log('comments:', comments);
   }
 
   async getOneBlogWithSlug(slug: string): Promise<BlogEntity> {
