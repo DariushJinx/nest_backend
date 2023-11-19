@@ -10,6 +10,7 @@ import slugify from 'slugify';
 import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { UpdateProductDto } from './dto/updateProduct.dto';
 import { FeatureEntity } from '../features/feature.entity';
+import { CommentEntity } from '../comment/comment.entity';
 
 @Injectable()
 export class ProductService {
@@ -20,6 +21,8 @@ export class ProductService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(FeatureEntity)
     private readonly featureRepository: Repository<FeatureEntity>,
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
   ) {}
 
   async createProduct(
@@ -87,6 +90,43 @@ export class ProductService {
     const productsCount = await queryBuilder.getCount();
     const products = await queryBuilder.getMany();
     return { products, productsCount };
+  }
+
+  async findAllProductsWithRating(user: UserEntity) {
+    const products = await this.productRepository.find();
+    const comments = await this.commentRepository.find({
+      where: { show: 1 },
+    });
+
+    const allProducts = [];
+
+    products.map(async (product) => {
+      let productTotalScore: number = 5;
+      const productScores = comments?.filter((comment) => {
+        if (comment.product_id) {
+          if (comment.product_id.id.toString() === product.id.toString()) {
+            return comment;
+          }
+        }
+      });
+
+      productScores.forEach((comment) => {
+        productTotalScore += Number(comment.score);
+      });
+      let average = ~~(productTotalScore / (productScores.length + 1));
+      if (average < 0) {
+        average = 0;
+      } else if (average > 5) {
+        average = 5;
+      }
+      allProducts.push({
+        ...product,
+        productAverageScore: average,
+      });
+      await this.productRepository.save(allProducts);
+    });
+
+    return allProducts;
   }
 
   async getOneProductWithSlug(slug: string): Promise<ProductEntity> {
