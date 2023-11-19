@@ -91,14 +91,16 @@ export class BlogService {
 
   async findAllBlogsWithRating(user: UserEntity) {
     const blogs = await this.blogRepository.find();
+    const comments = await this.commentRepository.find({
+      where: { show: 1 },
+    });
+
+    const allBlogs = [];
 
     blogs.map(async (blog) => {
-      const showComment = await this.commentRepository.find({
-        where: { show: 1 },
-      });
       let blogTotalScore: number = 5;
-      const blogScores = showComment?.filter((comment) => {
-        if (comment.blog_id.id) {
+      const blogScores = comments?.filter((comment) => {
+        if (comment.blog_id) {
           if (comment.blog_id.id.toString() === blog.id.toString()) {
             return comment;
           }
@@ -108,19 +110,20 @@ export class BlogService {
       blogScores.forEach((comment) => {
         blogTotalScore += Number(comment.score);
       });
-      console.log('blogTotalScore:', blogTotalScore / blogScores.length + 1);
-      console.log('blogScores:', blogScores.length + 1);
-      const blogAverageScore = ~~(blogTotalScore / blogScores.length + 1);
-      blog.blogAverageScore = blogAverageScore;
-      await this.blogRepository.save(blog);
-      console.log('blog.blogAverageScore:', blog.blogAverageScore);
-      // blogs.push(blog);
+      let average = ~~(blogTotalScore / (blogScores.length + 1));
+      if (average < 0) {
+        average = 0;
+      } else if (average > 5) {
+        average = 5;
+      }
+      allBlogs.push({
+        ...blog,
+        blogAverageScore: average,
+      });
+      await this.blogRepository.save(allBlogs);
     });
 
-    return blogs;
-
-    // const comments = await this.commentRepository.find({ where: { show: 1 } });
-    // console.log('comments:', comments);
+    return allBlogs;
   }
 
   async getOneBlogWithSlug(slug: string): Promise<BlogEntity> {
