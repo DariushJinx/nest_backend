@@ -54,6 +54,11 @@ export class CourseController_2 {
     return await this.courseService.findAllCourses(currentUser, query);
   }
 
+  @Get('all_courses')
+  async findAllCoursesWithRating(@User() user: UserEntity) {
+    return await this.courseService.findAllCoursesWithRating(user);
+  }
+
   @Get(':id')
   async getOneCourse(
     @Param('id') id: number,
