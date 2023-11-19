@@ -56,6 +56,11 @@ export class ProductController {
     return await this.productService.findAllProducts(currentUser, query);
   }
 
+  @Get('all_products')
+  async findAllProductsWithRating(@User() user: UserEntity) {
+    return await this.productService.findAllProductsWithRating(user);
+  }
+
   @Get(':id')
   async getOneProduct(
     @Param('id') id: number,
