@@ -10,6 +10,7 @@ import { CreateCourseDto_2 } from './dto/course_2.dto';
 import { CoursesResponseInterface_2 } from './types/coursesResponse_2.interface';
 import { UpdateCourseDto_2 } from './dto/updateCourse_2.dto';
 import { CourseResponseInterface_2 } from './types/courseResponse_2.interface';
+import { CommentEntity } from '../comment/comment.entity';
 
 @Injectable()
 export class CourseService_2 {
@@ -20,6 +21,8 @@ export class CourseService_2 {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ChapterEntity)
     private readonly chapterRepository: Repository<ChapterEntity>,
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
   ) {}
 
   async createCourse(
@@ -98,6 +101,43 @@ export class CourseService_2 {
     const courses = await queryBuilder.getMany();
     courses.map((course) => delete course.teacher.password);
     return { courses, coursesCount };
+  }
+
+  async findAllCoursesWithRating(user: UserEntity) {
+    const courses = await this.courseRepository.find();
+    const comments = await this.commentRepository.find({
+      where: { show: 1 },
+    });
+
+    const allCourses = [];
+
+    courses.map(async (course) => {
+      let courseTotalScore: number = 5;
+      const courseScores = comments?.filter((comment) => {
+        if (comment.course_id) {
+          if (comment.course_id.id.toString() === course.id.toString()) {
+            return comment;
+          }
+        }
+      });
+
+      courseScores.forEach((comment) => {
+        courseTotalScore += Number(comment.score);
+      });
+      let average = ~~(courseTotalScore / (courseScores.length + 1));
+      if (average < 0) {
+        average = 0;
+      } else if (average > 5) {
+        average = 5;
+      }
+      allCourses.push({
+        ...course,
+        courseAverageScore: average,
+      });
+      await this.courseRepository.save(allCourses);
+    });
+
+    return allCourses;
   }
 
   async currentCourse(id: number) {
