@@ -46,6 +46,9 @@ export class CourseEntity_2 {
   @Column({ default: 'free', enum: ['free', 'cash', 'special'] })
   type: string;
 
+  @Column({ default: 5 })
+  courseAverageScore: number;
+
   @Column({
     default: 'not_started',
     enum: ['not_started', 'completed', 'holding'],
