@@ -67,6 +67,13 @@ export class UserService {
     }
 
     const newUser = new UserEntity();
+    newUser.isBan = '0';
+    if (newUser.isBan === '1') {
+      throw new HttpException(
+        'شماره تماس وارد شده مسدود می باشد',
+        HttpStatus.FORBIDDEN,
+      );
+    }
     const userCounts = await this.userRepository.count();
     newUser.role = userCounts > 3 ? 'USER' : 'ADMIN';
     Object.assign(newUser, registerDto);
@@ -82,6 +89,7 @@ export class UserService {
       select: {
         password: true,
         email: true,
+        isBan: true,
       },
       where: {
         email: loginDto.email,
@@ -94,6 +102,13 @@ export class UserService {
       throw new HttpException(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
+    if (user.isBan === '1') {
+      throw new HttpException(
+        'شماره تماس وارد شده مسدود می باشد',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const isPasswordCorrect = await compare(loginDto.password, user.password);
 
     if (!isPasswordCorrect) {
@@ -103,6 +118,29 @@ export class UserService {
     }
 
     delete user.password;
+    return user;
+  }
+
+  async banUser(currentUser: UserEntity, id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: id },
+    });
+
+    if (!user) {
+      throw new HttpException('user does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    if (currentUser.role !== 'ADMIN') {
+      throw new HttpException(
+        'شما مجاز به بن کردن کابر نمی باشید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    user.isBan = '1';
+
+    await this.userRepository.save(user);
+
     return user;
   }
 
