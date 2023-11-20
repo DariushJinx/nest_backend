@@ -32,6 +32,9 @@ export class UserEntity {
   @Column()
   mobile: string;
 
+  @Column({ enum: ['0', '1'], default: '0' })
+  isBan: string;
+
   @Column()
   email: string;
 
