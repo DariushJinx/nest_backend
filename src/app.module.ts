@@ -17,6 +17,7 @@ import { CourseModule_2 } from './course_2/course_2.module';
 import { ChapterModule_2 } from './chapter_2/chapter_2.module';
 import { EpisodeModule_2 } from './episode_2/episode_2.module';
 import { CommentModule } from './comment/comment.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { CommentModule } from './comment/comment.module';
     EpisodeModule_2,
     OffModule,
     CommentModule,
+    ContactModule,
   ],
   controllers: [],
   providers: [],
