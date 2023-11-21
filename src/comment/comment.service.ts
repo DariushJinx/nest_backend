@@ -30,35 +30,37 @@ export class CommentService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const comment = new CommentEntity();
+    const newComment = new CommentEntity();
 
-    Object.assign(comment, createCommentDto);
+    Object.assign(newComment, createCommentDto);
 
-    comment.user_id = currentUser;
-    comment.tree_comment = [];
+    newComment.user_id = currentUser;
+    newComment.tree_comment = [];
 
-    delete comment.user_id.password;
-    const saveComment = await this.commentRepository.save(comment);
+    delete newComment.user_id.password;
+
+    const saveComment = await this.commentRepository.save(newComment);
 
     const comments = await this.commentRepository.find();
 
     comments.forEach(async (comment: any) => {
-      if (comment.parent && comment.parent !== 0) {
-        let parentCode = comment.parent.toString();
-        comment.tree_comment = [comment.id.toString(), parentCode];
+      if (newComment.parent && newComment.parent !== 0) {
+        let parentCode = newComment.parent.toString();
+        newComment.tree_comment = [newComment.id.toString(), parentCode];
         let parent = comments.find((item) => item.id.toString() === parentCode);
         while (parent && parent.parent !== 0) {
           parentCode = parent.parent.toString();
-          comment.tree_comment.push(parentCode);
+          newComment.tree_comment.push(parentCode);
           parent = comments.find((item) => item.id.toString() === parentCode);
         }
       } else {
-        comment.tree_comment = [comment.id.toString()];
+        newComment.tree_comment = [newComment.id.toString()];
       }
       await this.commentRepository.update(
         { id: comment.id },
         { tree_comment: comment.tree_comment },
       );
+      await this.commentRepository.save(saveComment);
     });
 
     return saveComment;
