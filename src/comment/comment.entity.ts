@@ -21,8 +21,8 @@ export class CommentEntity {
   @Column({ default: 0 })
   parent: number;
 
-  @Column({ default: true })
-  openToComment: boolean;
+  @Column({ default: 0 })
+  isLast: number;
 
   @Column('simple-array')
   tree_comment: string[];
