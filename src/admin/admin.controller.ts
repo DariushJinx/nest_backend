@@ -23,7 +23,7 @@ export class AdminController {
 
   @Post('auth/register/admin')
   @UsePipes(new BackendValidationPipe())
-  async registerUser(
+  async registerAdmin(
     @Body() registerDto: AdminRegisterDto,
   ): Promise<AdminType> {
     const admin = await this.adminService.registerAdmin(registerDto);
@@ -32,20 +32,17 @@ export class AdminController {
 
   @Post('auth/login/admin')
   @UsePipes(new BackendValidationPipe())
-  async loginUser(
+  async loginAdmin(
     @Body() loginDto: AdminLoginDto,
   ): Promise<AdminResponseInterface> {
     const admin = await this.adminService.loginAdmin(loginDto);
-    return await this.adminService.buildUserResponse(admin);
+    return await this.adminService.buildAdminResponse(admin);
   }
 
   @Put('admin/ban/:id')
   @UseGuards(AdminAuthGuard)
-  async followProfile(
-    @Admin() currentAdmin: AdminEntity,
-    @Param('id') id: number,
-  ) {
+  async banAdmin(@Admin() currentAdmin: AdminEntity, @Param('id') id: number) {
     const admin = await this.adminService.banAdmin(currentAdmin, id);
-    return await this.adminService.buildUserResponse(admin);
+    return await this.adminService.buildAdminResponse(admin);
   }
 }

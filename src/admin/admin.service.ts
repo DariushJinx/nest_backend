@@ -21,7 +21,7 @@ export class AdminService {
       errors: {},
     };
 
-    const userByEmail = await this.adminRepository.findOne({
+    const adminByEmail = await this.adminRepository.findOne({
       select: {
         email: true,
       },
@@ -30,7 +30,7 @@ export class AdminService {
       },
     });
 
-    const userByUsername = await this.adminRepository.findOne({
+    const adminByUsername = await this.adminRepository.findOne({
       select: {
         username: true,
       },
@@ -39,7 +39,7 @@ export class AdminService {
       },
     });
 
-    const userByMobile = await this.adminRepository.findOne({
+    const adminByMobile = await this.adminRepository.findOne({
       select: {
         mobile: true,
       },
@@ -48,35 +48,34 @@ export class AdminService {
       },
     });
 
-    if (userByEmail) {
+    if (adminByEmail) {
       errorResponse.errors['email'] = 'ایمیل وارد شده از قبل موجود می باشد';
     }
 
-    if (userByMobile) {
+    if (adminByMobile) {
       errorResponse.errors['mobile'] =
         'شماره تماس وارد شده از قبل موجود می باشد';
     }
 
-    if (userByUsername) {
+    if (adminByUsername) {
       errorResponse.errors['username'] =
         'نام کاربری وارد شده از قبل موجود می باشد';
     }
 
-    if (userByEmail || userByUsername || userByMobile) {
+    if (adminByEmail || adminByUsername || adminByMobile) {
       throw new HttpException(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    const newUser = new AdminEntity();
-    newUser.isBan = '0';
-    if (newUser.isBan === '1') {
-      throw new HttpException(
-        'شماره تماس وارد شده مسدود می باشد',
-        HttpStatus.FORBIDDEN,
-      );
+    const newAdmin = new AdminEntity();
+    newAdmin.isBan = '0';
+    if (newAdmin.isBan === '1') {
+      errorResponse.errors['username'] = 'شماره تماس وارد شده مسدود می باشد';
+      throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
     }
 
-    Object.assign(newUser, registerDto);
-    return await this.adminRepository.save(newUser);
+    Object.assign(newAdmin, registerDto);
+
+    return await this.adminRepository.save(newAdmin);
   }
 
   async loginAdmin(loginDto: AdminLoginDto): Promise<AdminEntity> {
@@ -84,7 +83,7 @@ export class AdminService {
       errors: {},
     };
 
-    const user = await this.adminRepository.findOne({
+    const admin = await this.adminRepository.findOne({
       select: {
         password: true,
         email: true,
@@ -95,43 +94,44 @@ export class AdminService {
       },
     });
 
-    if (!user) {
-      errorResponse.errors['user'] =
+    if (!admin) {
+      errorResponse.errors['admin'] =
         'ایمیل و یا رمز عبور وارد شده صحیح نمی باشد';
       throw new HttpException(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    if (user.isBan === '1') {
-      throw new HttpException(
-        'شماره تماس وارد شده مسدود می باشد',
-        HttpStatus.UNAUTHORIZED,
-      );
+    if (admin.isBan === '1') {
+      errorResponse.errors['admin'] = 'شماره تماس وارد شده مسدود می باشد';
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    const isPasswordCorrect = await compare(loginDto.password, user.password);
+    const isPasswordCorrect = await compare(loginDto.password, admin.password);
 
     if (!isPasswordCorrect) {
-      errorResponse.errors['user'] =
+      errorResponse.errors['admin'] =
         'ایمیل و یا رمز عبور وارد شده صحیح نمی باشد';
       throw new HttpException(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    delete user.password;
-    return user;
+    delete admin.password;
+    return admin;
   }
 
-  async banAdmin(currentUser: AdminEntity, id: number) {
+  async banAdmin(currentAdmin: AdminEntity, id: number) {
     const admin = await this.adminRepository.findOne({
       where: { id: id },
     });
 
     if (!admin) {
-      throw new HttpException('admin does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'ادمین مورد نظر موجود نمی باشد',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    if (currentUser.id !== admin.id) {
+    if (!currentAdmin) {
       throw new HttpException(
-        'شما مجاز به بن کردن کابر نمی باشید',
+        'شما مجاز به بن کردن کاربر نمی باشید',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -144,15 +144,37 @@ export class AdminService {
   }
 
   async findAdminByID(id: number): Promise<AdminEntity> {
-    return await this.adminRepository.findOne({
+    const admin = await this.adminRepository.findOne({
       where: { id: id },
     });
+
+    if (!admin) {
+      throw new HttpException(
+        'ادمین مورد نظر یافت نشد',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    delete admin.password;
+
+    return admin;
   }
 
   async findAdminByEmail(email: string): Promise<AdminEntity> {
-    return await this.adminRepository.findOne({
+    const admin = await this.adminRepository.findOne({
       where: { email: email },
     });
+
+    if (!admin) {
+      throw new HttpException(
+        'ادمین مورد نظر یافت نشد',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    delete admin.password;
+
+    return admin;
   }
 
   generateAdminJwtToken(admin: AdminEntity): string {
@@ -170,7 +192,9 @@ export class AdminService {
     );
   }
 
-  async buildUserResponse(admin: AdminEntity): Promise<AdminResponseInterface> {
+  async buildAdminResponse(
+    admin: AdminEntity,
+  ): Promise<AdminResponseInterface> {
     return {
       admin: {
         ...admin,
@@ -179,11 +203,11 @@ export class AdminService {
     };
   }
 
-  async buildUserResponses(user: AdminEntity) {
-    delete user.password;
+  async buildAdminResponses(admin: AdminEntity) {
+    delete admin.password;
     return {
-      user: {
-        ...user,
+      admin: {
+        ...admin,
       },
     };
   }
