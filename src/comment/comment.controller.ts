@@ -21,6 +21,9 @@ import { CommentsResponseInterface } from './types/commentsResponse.interface';
 import { CommentResponseInterface } from './types/commentResponse.interface';
 import { UpdateCommentDto } from './dto/updateComment.dto';
 import { DeleteResult } from 'typeorm';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { Admin } from 'src/decorators/admin.decorators';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Controller('comment')
 export class CommentController {
@@ -28,14 +31,17 @@ export class CommentController {
 
   @Post('add')
   @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async createCourse(
     @User() currentUser: UserEntity,
+    @Admin() admin: AdminEntity,
     @Body() createCommentDto: CreateCommentDto,
   ) {
     const comment = await this.commentService.createComment(
       currentUser,
       createCommentDto,
+      admin,
     );
     return await this.commentService.buildCommentResponse(comment);
   }
