@@ -15,13 +15,16 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly userService: UserService) {}
 
   async use(req: ExpressRequest, res: Response, next: NextFunction) {
-    if (!req.headers.authorization) {
+    if (!req.headers.token) {
       req.user = null;
       next();
       return;
     }
 
-    const token = req.headers.authorization.split(' ')[1];
+    let token: any;
+    if (req.headers && req.headers.token) {
+      token = req.headers.token;
+    }
 
     try {
       verify(token, ACCESS_TOKEN_SECRET_KEY, async (err: any, payload: any) => {
