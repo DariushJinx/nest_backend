@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { CommentResponseInterface } from './types/commentResponse.interface';
 import { CommentsResponseInterface } from './types/commentsResponse.interface';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Injectable()
 export class CommentService {
@@ -19,6 +20,7 @@ export class CommentService {
   async createComment(
     currentUser: UserEntity,
     createCommentDto: CreateCommentDto,
+    admin: AdminEntity,
   ): Promise<CommentEntity> {
     if (
       !createCommentDto.blog_id &&
@@ -34,7 +36,12 @@ export class CommentService {
 
     Object.assign(newComment, createCommentDto);
 
+    // if (admin) {
+    //   newComment.user_id = admin;
+    // }else
+
     newComment.user_id = currentUser;
+
     newComment.tree_comment = [];
 
     delete newComment.user_id.password;
