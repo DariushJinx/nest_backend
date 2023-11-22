@@ -1,6 +1,5 @@
 import { CommentEntity } from '../comment/comment.entity';
 import { CategoryEntity } from '../category/category.entity';
-import { UserEntity } from '../user/user.entity';
 import {
   Column,
   Entity,
@@ -8,6 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Entity({ name: 'blog' })
 export class BlogEntity {
@@ -43,8 +43,8 @@ export class BlogEntity {
   })
   category: CategoryEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.blogs, { eager: true })
-  author: UserEntity;
+  @ManyToOne(() => AdminEntity, (admin) => admin.blogs, { eager: true })
+  author: AdminEntity;
 
   @OneToMany(() => CommentEntity, (comment) => comment.blog_id)
   comments: CommentEntity[];
