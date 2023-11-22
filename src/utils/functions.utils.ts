@@ -11,7 +11,9 @@ export class FunctionUtils {
   ) {
     if (files) {
       return files
-        .map((file) => join('/', fileUploadPath, file.filename))
+        .map((file) =>
+          join('http://localhost:3333/', fileUploadPath, file.filename),
+        )
         .map((item) => item.replace(/\\/g, '/'));
     } else {
       return [];
