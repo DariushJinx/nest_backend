@@ -11,18 +11,15 @@ import {
   Param,
   Delete,
   Put,
-  Res,
 } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { User } from '../decorators/user.decorators';
-import { UserEntity } from '../user/user.entity';
 import { CreateBlogDto } from './dto/blog.dto';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { BlogResponseInterface } from './types/blogResponse.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../category/middlewares/multer';
 import { AuthGuard } from '../user/guard/auth.guard';
-import { DeleteResult } from 'typeorm';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
 import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
@@ -72,8 +69,12 @@ export class BlogController {
   async deleteOneBlogWithSlug(
     @Admin() admin: AdminEntity,
     @Param('slug') slug: string,
-  ): Promise<DeleteResult> {
-    return await this.blogService.deleteOneBlogWithSlug(slug, admin);
+  ): Promise<{ message: string }> {
+    await this.blogService.deleteOneBlogWithSlug(slug, admin);
+
+    return {
+      message: 'مقاله مورد نظر با موفقیت حذف گردید',
+    };
   }
 
   @Put(':id')

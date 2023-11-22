@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './blog.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { CreateBlogDto } from './dto/blog.dto';
 import slugify from 'slugify';
@@ -10,7 +10,8 @@ import { FunctionUtils } from '../utils/functions.utils';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { CommentEntity } from '../comment/comment.entity';
-import { AdminEntity } from 'src/admin/admin.entity';
+import { AdminEntity } from '../admin/admin.entity';
+import { CategoryEntity } from '../category/category.entity';
 
 @Injectable()
 export class BlogService {
@@ -23,6 +24,8 @@ export class BlogService {
     private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
+    @InjectRepository(CategoryEntity)
+    private readonly categoryRepository: Repository<CategoryEntity>,
   ) {}
 
   async createBlog(
@@ -30,18 +33,29 @@ export class BlogService {
     createBlogDto: CreateBlogDto,
     files: Express.Multer.File[],
   ): Promise<BlogEntity> {
+    const errorResponse = {
+      errors: {},
+    };
+
     if (!admin) {
-      throw new HttpException(
-        'شما مجاز به ثبت مقاله نیستید',
-        HttpStatus.UNAUTHORIZED,
-      );
+      errorResponse.errors['forbidden'] = 'شما مجاز به ثبت مقاله نیستید';
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    const checkExistsCategory = await this.categoryRepository.findOne({
+      where: { id: +createBlogDto.category },
+    });
+
+    if (!checkExistsCategory) {
+      errorResponse.errors['category'] = 'دسته بندی مورد نظر یافت نشد';
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
+    }
     const blog = new BlogEntity();
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
       createBlogDto.fileUploadPath,
     );
+
     delete createBlogDto.fileUploadPath;
     delete createBlogDto.filename;
     Object.assign(blog, createBlogDto);
@@ -50,9 +64,7 @@ export class BlogService {
     blog.images = images;
     delete blog.author.password;
     blog.slug = this.getSlug(createBlogDto.title);
-    return await this.blogRepository.save({
-      ...blog,
-    });
+    return await this.blogRepository.save(blog);
   }
 
   async findAllBlogs(
@@ -102,6 +114,11 @@ export class BlogService {
 
     const blogsCount = await queryBuilder.getCount();
     const blogs = await queryBuilder.getMany();
+
+    if (!blogs.length) {
+      throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
     blogs.forEach((blog) => {
       delete blog.author.password;
     });
@@ -110,6 +127,11 @@ export class BlogService {
 
   async findAllBlogsWithRating() {
     const blogs = await this.blogRepository.find();
+
+    if (!blogs.length) {
+      throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
     const comments = await this.commentRepository.find({
       where: { show: 1 },
     });
@@ -157,8 +179,11 @@ export class BlogService {
     });
 
     if (!blog) {
-      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
     }
+
+    delete blog.category.id;
+    delete blog.category.images;
 
     delete blog.author.password;
 
@@ -171,7 +196,7 @@ export class BlogService {
     });
 
     if (!blog) {
-      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
     }
 
     delete blog.author.password;
@@ -182,7 +207,7 @@ export class BlogService {
   async deleteOneBlogWithSlug(
     slug: string,
     admin: AdminEntity,
-  ): Promise<DeleteResult> {
+  ): Promise<{ message: string }> {
     if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف مقاله نیستید',
@@ -195,7 +220,11 @@ export class BlogService {
       throw new HttpException('مقاله مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
 
-    return await this.blogRepository.delete({ slug });
+    await this.blogRepository.delete({ slug });
+
+    return {
+      message: 'مقاله مورد نظر با موفقیت حذف گردید',
+    };
   }
 
   async updateBlog(
@@ -203,17 +232,20 @@ export class BlogService {
     admin: AdminEntity,
     updateBlogDto: UpdateBlogDto,
   ) {
+    const errorResponse = {
+      errors: {},
+    };
+
     const blog = await this.getOneBlogWithID(id);
 
     if (!blog) {
-      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+      errorResponse.errors['blog'] = 'مقاله مورد نظر یافت نشد';
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     if (!admin) {
-      throw new HttpException(
-        'شما مجاز به به روز رسانی مقاله نیستید',
-        HttpStatus.FORBIDDEN,
-      );
+      errorResponse.errors['admin'] = 'شما مجاز به به روز رسانی مقاله نیستید';
+      throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     Object.assign(blog, updateBlogDto);
@@ -229,6 +261,10 @@ export class BlogService {
       relations: ['favorites'],
     });
     const blog = await this.getOneBlogWithID(blogId);
+
+    if (!blog) {
+      throw new HttpException('مقاله مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
 
     const isNotFavorite =
       user.favorites.findIndex(
@@ -253,6 +289,10 @@ export class BlogService {
       relations: ['favorites'],
     });
     const blog = await this.getOneBlogWithID(blogId);
+
+    if (!blog) {
+      throw new HttpException('مقاله مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
 
     const blogIndex = user.favorites.findIndex(
       (blogInFavorite) => blogInFavorite.id === blog.id,
