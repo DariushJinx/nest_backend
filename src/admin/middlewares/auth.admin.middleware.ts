@@ -15,15 +15,15 @@ export class AdminAuthMiddleware implements NestMiddleware {
   constructor(private readonly adminService: AdminService) {}
 
   async use(req: ExpressAdminRequest, res: Response, next: NextFunction) {
-    if (!req.headers.adminToken) {
+    if (!req.headers.admintoken) {
       req.admin = null;
       next();
       return;
     }
 
     let token: any;
-    if (req.headers && req.headers.adminToken) {
-      token = req.headers.adminToken;
+    if (req.headers && req.headers.admintoken) {
+      token = req.headers.admintoken;
     }
 
     try {
