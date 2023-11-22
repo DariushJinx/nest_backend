@@ -18,6 +18,8 @@ import { ChapterModule_2 } from './chapter_2/chapter_2.module';
 import { EpisodeModule_2 } from './episode_2/episode_2.module';
 import { CommentModule } from './comment/comment.module';
 import { ContactModule } from './contact/contact.module';
+import { AdminModule } from './admin/admin.module';
+import { AdminAuthMiddleware } from './admin/middlewares/auth.admin.middleware';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { ContactModule } from './contact/contact.module';
     OffModule,
     CommentModule,
     ContactModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [],
@@ -52,6 +55,12 @@ import { ContactModule } from './contact/contact.module';
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    });
+  }
+  configureAdmin(consumer: MiddlewareConsumer) {
+    consumer.apply(AdminAuthMiddleware).forRoutes({
       path: '*',
       method: RequestMethod.ALL,
     });
