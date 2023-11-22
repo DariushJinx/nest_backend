@@ -10,6 +10,7 @@ import { FunctionUtils } from '../utils/functions.utils';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { CommentEntity } from '../comment/comment.entity';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Injectable()
 export class BlogService {
@@ -18,15 +19,24 @@ export class BlogService {
     private readonly blogRepository: Repository<BlogEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(AdminEntity)
+    private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
   ) {}
 
   async createBlog(
-    currentUser: UserEntity,
+    admin: AdminEntity,
     createBlogDto: CreateBlogDto,
     files: Express.Multer.File[],
   ): Promise<BlogEntity> {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به ثبت مقاله نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const blog = new BlogEntity();
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
@@ -35,18 +45,18 @@ export class BlogService {
     delete createBlogDto.fileUploadPath;
     delete createBlogDto.filename;
     Object.assign(blog, createBlogDto);
-    blog.author = currentUser;
+    blog.author = admin;
+    delete blog.author.password;
+    blog.images = images;
     delete blog.author.password;
     blog.slug = this.getSlug(createBlogDto.title);
     return await this.blogRepository.save({
       ...blog,
-      images,
-      author: currentUser,
     });
   }
 
   async findAllBlogs(
-    currentUser: number,
+    admin: AdminEntity,
     query: any,
   ): Promise<BlogsResponseInterface> {
     const queryBuilder = this.blogRepository
@@ -66,9 +76,15 @@ export class BlogService {
     }
 
     if (query.author) {
-      const author = await this.userRepository.findOne({
+      const author = await this.adminRepository.findOne({
         where: { username: query.author },
       });
+      if (!author) {
+        throw new HttpException(
+          'مقاله ای با این نویسنده یافت نشد',
+          HttpStatus.NOT_FOUND,
+        );
+      }
       queryBuilder.andWhere('blog.authorId = :id', {
         id: author.id,
       });
@@ -86,10 +102,13 @@ export class BlogService {
 
     const blogsCount = await queryBuilder.getCount();
     const blogs = await queryBuilder.getMany();
+    blogs.forEach((blog) => {
+      delete blog.author.password;
+    });
     return { blogs, blogsCount };
   }
 
-  async findAllBlogsWithRating(user: UserEntity) {
+  async findAllBlogsWithRating() {
     const blogs = await this.blogRepository.find();
     const comments = await this.commentRepository.find({
       where: { show: 1 },
@@ -120,6 +139,11 @@ export class BlogService {
         ...blog,
         blogAverageScore: average,
       });
+
+      blogs.forEach((blog) => {
+        delete blog.author.password;
+      });
+
       await this.blogRepository.save(allBlogs);
     });
 
@@ -127,28 +151,48 @@ export class BlogService {
   }
 
   async getOneBlogWithSlug(slug: string): Promise<BlogEntity> {
-    return await this.blogRepository.findOne({
+    const blog = await this.blogRepository.findOne({
       where: { slug: slug },
       relations: ['comments'],
     });
+
+    if (!blog) {
+      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    delete blog.author.password;
+
+    return blog;
   }
 
   async getOneBlogWithID(id: number): Promise<BlogEntity> {
-    return await this.blogRepository.findOne({
+    const blog = await this.blogRepository.findOne({
       where: { id: id },
     });
+
+    if (!blog) {
+      throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    delete blog.author.password;
+
+    return blog;
   }
 
-  async deleteOneBlogWithSlug(slug: string): Promise<DeleteResult> {
+  async deleteOneBlogWithSlug(
+    slug: string,
+    admin: AdminEntity,
+  ): Promise<DeleteResult> {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به حذف مقاله نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const blog = await this.getOneBlogWithSlug(slug);
     if (!blog) {
       throw new HttpException('مقاله مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
-    }
-    if (blog.author.role !== 'ADMIN') {
-      throw new HttpException(
-        'شما مجاز به حذف مقاله نیستید',
-        HttpStatus.FORBIDDEN,
-      );
     }
 
     return await this.blogRepository.delete({ slug });
@@ -156,7 +200,7 @@ export class BlogService {
 
   async updateBlog(
     id: number,
-    currentUserID: number,
+    admin: AdminEntity,
     updateBlogDto: UpdateBlogDto,
   ) {
     const blog = await this.getOneBlogWithID(id);
@@ -165,11 +209,16 @@ export class BlogService {
       throw new HttpException('blog does not exist', HttpStatus.NOT_FOUND);
     }
 
-    if (blog.author.id !== currentUserID) {
-      throw new HttpException('you are not an author', HttpStatus.FORBIDDEN);
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به به روز رسانی مقاله نیستید',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     Object.assign(blog, updateBlogDto);
+
+    delete blog.author.password;
 
     return await this.blogRepository.save(blog);
   }
@@ -185,6 +234,8 @@ export class BlogService {
       user.favorites.findIndex(
         (blogInFavorite) => blogInFavorite.id === blog.id,
       ) === -1;
+
+    delete blog.author.password;
 
     if (isNotFavorite) {
       user.favorites.push(blog);
@@ -216,6 +267,9 @@ export class BlogService {
       await this.userRepository.save(user);
       await this.blogRepository.save(blog);
     }
+
+    delete blog.author.password;
+
     return blog;
   }
 
