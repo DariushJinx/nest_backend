@@ -25,41 +25,38 @@ import { AuthGuard } from '../user/guard/auth.guard';
 import { DeleteResult } from 'typeorm';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';
-import { join } from 'path';
-import { of } from 'rxjs';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { AdminEntity } from '../admin/admin.entity';
+import { Admin } from '../decorators/admin.decorators';
 
 @Controller('blog')
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async createBlog(
-    @User() currentUser: UserEntity,
+    @Admin() admin: AdminEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() createBlogDto: CreateBlogDto,
   ): Promise<BlogResponseInterface> {
-    const blog = await this.blogService.createBlog(
-      currentUser,
-      createBlogDto,
-      files,
-    );
+    const blog = await this.blogService.createBlog(admin, createBlogDto, files);
     return await this.blogService.buildBlogResponse(blog);
   }
 
   @Get('list')
   async findAllBlogs(
-    @User() currentUser: number,
+    @Admin() admin: AdminEntity,
     @Query() query: any,
   ): Promise<BlogsResponseInterface> {
-    return await this.blogService.findAllBlogs(currentUser, query);
+    return await this.blogService.findAllBlogs(admin, query);
   }
 
   @Get('all_blogs')
-  async findAllBlogsWithRating(@User() user: UserEntity) {
-    return await this.blogService.findAllBlogsWithRating(user);
+  async findAllBlogsWithRating() {
+    return await this.blogService.findAllBlogsWithRating();
   }
 
   @Get(':slug')
@@ -70,34 +67,24 @@ export class BlogController {
     return await this.blogService.buildBlogResponse(blog);
   }
 
-  @Get(':imageName')
-  findImage(@Param('imageName') imageName: string, @Res() res) {
-    return of(
-      res.sendFile(join(process.cwd(), 'public', 'uploads', imageName)),
-    );
-  }
-
   @Delete(':slug')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   async deleteOneBlogWithSlug(
+    @Admin() admin: AdminEntity,
     @Param('slug') slug: string,
   ): Promise<DeleteResult> {
-    return await this.blogService.deleteOneBlogWithSlug(slug);
+    return await this.blogService.deleteOneBlogWithSlug(slug, admin);
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async updateOneBlogWithId(
     @Param('id') id: number,
-    @User('id') currentUserID: number,
+    @Admin() admin: AdminEntity,
     @Body('') updateBlogDto: UpdateBlogDto,
   ): Promise<BlogResponseInterface> {
-    const blog = await this.blogService.updateBlog(
-      id,
-      currentUserID,
-      updateBlogDto,
-    );
+    const blog = await this.blogService.updateBlog(id, admin, updateBlogDto);
     return await this.blogService.buildBlogResponse(blog);
   }
 
