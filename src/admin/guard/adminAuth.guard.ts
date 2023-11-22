@@ -11,9 +11,10 @@ import { ExpressAdminRequest } from '../../types/expressAdminRequest.interface c
 export class AdminAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<ExpressAdminRequest>();
-    if (request.admin) {
+
+    if (request.headers.admintoken) {
       return true;
     }
-    throw new HttpException('Not Authorized', HttpStatus.UNAUTHORIZED);
+    throw new HttpException('شما مجاز نیستید', HttpStatus.UNAUTHORIZED);
   }
 }
