@@ -44,11 +44,8 @@ export class BlogController {
   }
 
   @Get('list')
-  async findAllBlogs(
-    @Admin() admin: AdminEntity,
-    @Query() query: any,
-  ): Promise<BlogsResponseInterface> {
-    return await this.blogService.findAllBlogs(admin, query);
+  async findAllBlogs(@Query() query: any): Promise<BlogsResponseInterface> {
+    return await this.blogService.findAllBlogs(query);
   }
 
   @Get('all_blogs')
