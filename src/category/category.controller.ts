@@ -8,21 +8,21 @@ import {
   Get,
   Delete,
   Param,
-  Res,
   UseGuards,
+  Query,
+  Put,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { CreateCategoryDto } from './dto/category.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from './middlewares/multer';
-import { of } from 'rxjs';
-import { join } from 'path';
 import { CategoriesResponseInterface } from './types/categoriesResponse.interface';
-import { DeleteResult } from 'typeorm';
 import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
 import { Admin } from '../decorators/admin.decorators';
 import { AdminEntity } from '../admin/admin.entity';
+import { CategoryResponseInterface } from './types/categoryResponse.interface';
+import { UpdateCategoryDto } from './dto/updateCategory.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -46,19 +46,42 @@ export class CategoryController {
   }
 
   @Get('list')
-  async getListOfCategories(): Promise<CategoriesResponseInterface> {
-    return this.categoryService.getListOfCategories();
+  async getListOfCategories(
+    @Query() query: any,
+  ): Promise<CategoriesResponseInterface> {
+    return this.categoryService.getListOfCategories(query);
+  }
+
+  @Get(':id')
+  async getOneCategoryWithID(
+    @Param('id') id: number,
+  ): Promise<CategoryResponseInterface> {
+    const blog = await this.categoryService.getOneCategory(id);
+    return await this.categoryService.buildCategoryResponse(blog);
   }
 
   @Delete(':id')
-  async deleteCategoryWithId(@Param('id') id: number): Promise<DeleteResult> {
-    return await this.categoryService.deleteCategory(id);
+  @UseGuards(AdminAuthGuard)
+  async deleteCategoryWithId(
+    @Param('id') id: number,
+    @Admin() admin: AdminEntity,
+  ): Promise<{ message: string }> {
+    return await this.categoryService.deleteCategory(id, admin);
   }
 
-  @Get(':imageName')
-  findImage(@Param('imageName') imageName: string, @Res() res) {
-    return of(
-      res.sendFile(join(process.cwd(), 'public', 'uploads', imageName)),
+  @Put(':id')
+  @UseGuards(AdminAuthGuard)
+  @UsePipes(new BackendValidationPipe())
+  async updateOneCategoryWithId(
+    @Param('id') id: number,
+    @Admin() admin: AdminEntity,
+    @Body('') updateCategoryDto: UpdateCategoryDto,
+  ): Promise<CategoryResponseInterface> {
+    const category = await this.categoryService.updateCategory(
+      id,
+      admin,
+      updateCategoryDto,
     );
+    return await this.categoryService.buildCategoryResponse(category);
   }
 }
