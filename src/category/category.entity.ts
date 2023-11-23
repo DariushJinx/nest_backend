@@ -32,4 +32,19 @@ export class CategoryEntity {
 
   @ManyToOne(() => AdminEntity, (admin) => admin.categories, { eager: true })
   register: AdminEntity;
+
+  @Column({ default: 0 })
+  parent: number;
+
+  @Column({ default: 0 })
+  isLast: number;
+
+  @Column('simple-array')
+  tree_comment: string[];
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 }
