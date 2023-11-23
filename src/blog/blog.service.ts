@@ -38,7 +38,8 @@ export class BlogService {
     };
 
     if (!admin) {
-      errorResponse.errors['forbidden'] = 'شما مجاز به ثبت مقاله نیستید';
+      errorResponse.errors['error'] = 'شما مجاز به ثبت مقاله نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
       throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
@@ -48,6 +49,7 @@ export class BlogService {
 
     if (!checkExistsCategory) {
       errorResponse.errors['category'] = 'دسته بندی مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
       throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     }
     const blog = new BlogEntity();
@@ -67,10 +69,7 @@ export class BlogService {
     return await this.blogRepository.save(blog);
   }
 
-  async findAllBlogs(
-    admin: AdminEntity,
-    query: any,
-  ): Promise<BlogsResponseInterface> {
+  async findAllBlogs(query: any): Promise<BlogsResponseInterface> {
     const queryBuilder = this.blogRepository
       .createQueryBuilder('blog')
       .leftJoinAndSelect('blog.author', 'author');
@@ -122,6 +121,7 @@ export class BlogService {
     blogs.forEach((blog) => {
       delete blog.author.password;
     });
+
     return { blogs, blogsCount };
   }
 
@@ -164,6 +164,8 @@ export class BlogService {
 
       blogs.forEach((blog) => {
         delete blog.author.password;
+        delete blog.category.register;
+        delete blog.category.images;
       });
 
       await this.blogRepository.save(allBlogs);
@@ -184,7 +186,7 @@ export class BlogService {
 
     delete blog.category.id;
     delete blog.category.images;
-
+    delete blog.category.register;
     delete blog.author.password;
 
     return blog;
@@ -251,6 +253,8 @@ export class BlogService {
     Object.assign(blog, updateBlogDto);
 
     delete blog.author.password;
+    delete blog.category.register;
+    delete blog.category.images;
 
     return await this.blogRepository.save(blog);
   }
@@ -272,6 +276,8 @@ export class BlogService {
       ) === -1;
 
     delete blog.author.password;
+    delete blog.category.register;
+    delete blog.category.images;
 
     if (isNotFavorite) {
       user.favorites.push(blog);
@@ -309,6 +315,8 @@ export class BlogService {
     }
 
     delete blog.author.password;
+    delete blog.category.register;
+    delete blog.category.images;
 
     return blog;
   }
