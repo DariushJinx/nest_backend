@@ -6,6 +6,7 @@ import { CreateCategoryDto } from './dto/category.dto';
 import { CategoryResponseInterface } from './types/categoryResponse.interface';
 import { FunctionUtils } from '../utils/functions.utils';
 import { CategoriesResponseInterface } from './types/categoriesResponse.interface';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Injectable()
 export class CategoryService {
@@ -16,36 +17,40 @@ export class CategoryService {
 
   async addCategory(
     categoryDto: CreateCategoryDto,
+    admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<CategoryEntity> {
     const errorResponse = {
       errors: {},
     };
 
-    const category = await this.categoryRepository.findOne({
-      select: {
-        title: true,
-      },
-      where: {
-        title: categoryDto.title,
-      },
-    });
+    const category = new CategoryEntity();
 
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
       categoryDto.fileUploadPath,
     );
 
-    if (category) {
+    delete categoryDto.fileUploadPath;
+    delete categoryDto.filename;
+    Object.assign(category, categoryDto);
+
+    const checkExistCategory = await this.categoryRepository.findOne({
+      where: {
+        title: category.title,
+      },
+    });
+
+    if (checkExistCategory) {
       errorResponse.errors['category'] =
         'دسته بندی وارد شده از قبل موجود می باشد';
       throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    return await this.categoryRepository.save({
-      title: categoryDto.title,
-      images,
-    });
+    category.register = admin;
+    delete category.register.password;
+    category.images = images;
+    return await this.categoryRepository.save(category);
   }
 
   async getListOfCategories(): Promise<CategoriesResponseInterface> {
