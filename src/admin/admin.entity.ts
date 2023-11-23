@@ -7,6 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { CategoryEntity } from '../category/category.entity';
 
 @Entity({ name: 'admin' })
 export class AdminEntity {
@@ -41,4 +42,7 @@ export class AdminEntity {
 
   @OneToMany(() => BlogEntity, (blog) => blog.author)
   blogs: BlogEntity[];
+
+  @OneToMany(() => CategoryEntity, (blog) => blog.register)
+  categories: CategoryEntity[];
 }
