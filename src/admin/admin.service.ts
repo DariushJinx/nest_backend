@@ -75,7 +75,11 @@ export class AdminService {
 
     Object.assign(newAdmin, registerDto);
 
-    return await this.adminRepository.save(newAdmin);
+    const admin = await this.adminRepository.save(newAdmin);
+
+    delete admin.password;
+
+    return admin;
   }
 
   async loginAdmin(loginDto: AdminLoginDto): Promise<AdminEntity> {
