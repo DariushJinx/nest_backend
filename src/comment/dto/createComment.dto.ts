@@ -19,5 +19,7 @@ export class CreateCommentDto {
   @IsOptional()
   @Expose()
   parent: number;
+  @IsOptional()
+  @Expose()
   tree_comment: string[];
 }
