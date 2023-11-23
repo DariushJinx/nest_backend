@@ -12,7 +12,7 @@ export class FunctionUtils {
     if (files) {
       return files
         .map((file) =>
-          join('http://localhost:3333' + '/' + fileUploadPath + file.filename),
+          join('http://localhost:3333/', fileUploadPath, file.filename),
         )
         .map((item) => item.replace('\\', '//').replace('\\', '/'));
     } else {
