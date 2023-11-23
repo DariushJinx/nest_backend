@@ -77,7 +77,11 @@ export class UserService {
     const userCounts = await this.userRepository.count();
     newUser.role = userCounts > 3 ? 'USER' : 'ADMIN';
     Object.assign(newUser, registerDto);
-    return await this.userRepository.save(newUser);
+    const user = await this.userRepository.save(newUser);
+
+    delete user.password;
+
+    return user;
   }
 
   async loginUser(loginDto: LoginDto): Promise<UserEntity> {
