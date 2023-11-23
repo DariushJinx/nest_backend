@@ -1,6 +1,6 @@
 import { CategoryType } from './category.types';
 
 export interface CategoriesResponseInterface {
-  categories: CategoryType[];
+  allCategories: CategoryType[];
   categoriesCount: number;
 }
