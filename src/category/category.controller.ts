@@ -9,6 +9,7 @@ import {
   Delete,
   Param,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
@@ -19,6 +20,9 @@ import { of } from 'rxjs';
 import { join } from 'path';
 import { CategoriesResponseInterface } from './types/categoriesResponse.interface';
 import { DeleteResult } from 'typeorm';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { Admin } from '../decorators/admin.decorators';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Controller('category')
 export class CategoryController {
@@ -26,12 +30,18 @@ export class CategoryController {
 
   @Post('add')
   @UsePipes(new BackendValidationPipe())
+  @UseGuards(AdminAuthGuard)
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async addCategory(
+    @Admin() admin: AdminEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() categoryDto: CreateCategoryDto,
   ) {
-    const category = await this.categoryService.addCategory(categoryDto, files);
+    const category = await this.categoryService.addCategory(
+      categoryDto,
+      admin,
+      files,
+    );
     return this.categoryService.buildCategoryResponse(category);
   }
 
