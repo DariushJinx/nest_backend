@@ -40,7 +40,7 @@ export class CategoryEntity {
   isLast: number;
 
   @Column('simple-array')
-  tree_comment: string[];
+  tree_cat: string[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
