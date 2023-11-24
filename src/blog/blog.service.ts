@@ -37,14 +37,8 @@ export class BlogService {
       errors: {},
     };
 
-    if (!admin) {
-      errorResponse.errors['error'] = 'شما مجاز به ثبت مقاله نیستید';
-      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
-      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
     const checkExistsCategory = await this.categoryRepository.findOne({
-      where: { id: +createBlogDto.category },
+      where: { id: Number(createBlogDto.category) },
     });
 
     if (!checkExistsCategory) {
@@ -52,7 +46,15 @@ export class BlogService {
       errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
       throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    if (!admin) {
+      errorResponse.errors['error'] = 'شما مجاز به ثبت مقاله نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
     const blog = new BlogEntity();
+
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
       createBlogDto.fileUploadPath,
@@ -61,11 +63,39 @@ export class BlogService {
     delete createBlogDto.fileUploadPath;
     delete createBlogDto.filename;
     Object.assign(blog, createBlogDto);
+    blog.tree_blog = [];
     blog.author = admin;
     delete blog.author.password;
     blog.images = images;
     delete blog.author.password;
     blog.slug = this.getSlug(createBlogDto.title);
+
+    const saveBlog = await this.blogRepository.save(blog);
+
+    const blogs = await this.blogRepository.find();
+
+    blogs.forEach(async (comment: any) => {
+      if (blog.parent && blog.parent !== 0) {
+        let parentCode = blog.parent.toString();
+        blog.tree_blog = [blog.id.toString(), parentCode];
+        let parent = blogs.find((item) => item.id.toString() === parentCode);
+        while (parent && parent.parent !== 0) {
+          parentCode = parent.parent.toString();
+          blog.tree_blog.push(parentCode);
+          parent = blogs.find((item) => item.id.toString() === parentCode);
+        }
+      } else {
+        blog.tree_blog = [blog.id.toString()];
+      }
+      await this.blogRepository.update(
+        { id: comment.id },
+        { tree_blog: comment.tree_blog },
+      );
+      await this.blogRepository.save(saveBlog);
+    });
+
+    return saveBlog;
+
     return await this.blogRepository.save(blog);
   }
 
