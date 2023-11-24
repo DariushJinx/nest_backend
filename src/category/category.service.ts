@@ -38,7 +38,7 @@ export class CategoryService {
     delete categoryDto.filename;
     Object.assign(category, categoryDto);
 
-    category.tree_comment = [];
+    category.tree_cat = [];
     category.register = admin;
     delete category.register.password;
     category.images = images;
@@ -61,21 +61,21 @@ export class CategoryService {
     categories.forEach(async (comment: any) => {
       if (category.parent && category.parent !== 0) {
         let parentCode = category.parent.toString();
-        category.tree_comment = [category.id.toString(), parentCode];
+        category.tree_cat = [category.id.toString(), parentCode];
         let parent = categories.find(
           (item) => item.id.toString() === parentCode,
         );
         while (parent && parent.parent !== 0) {
           parentCode = parent.parent.toString();
-          category.tree_comment.push(parentCode);
+          category.tree_cat.push(parentCode);
           parent = categories.find((item) => item.id.toString() === parentCode);
         }
       } else {
-        category.tree_comment = [category.id.toString()];
+        category.tree_cat = [category.id.toString()];
       }
       await this.categoryRepository.update(
         { id: comment.id },
-        { tree_comment: comment.tree_comment },
+        { tree_cat: comment.tree_cat },
       );
       await this.categoryRepository.save(saveCategory);
     });
@@ -141,6 +141,84 @@ export class CategoryService {
     delete category.register.password;
 
     return category;
+  }
+
+  async reIndexTreeCategory(admin: AdminEntity) {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این بخش نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const queryBuilder = this.categoryRepository.createQueryBuilder('category');
+
+    queryBuilder.orderBy('category.id', 'DESC');
+
+    const categories = await queryBuilder.getMany();
+
+    categories.forEach(async (item) => {
+      item.tree_cat = [];
+
+      if (item.parent && item.parent !== 0) {
+        let parentId = item.parent.toString();
+        const categoryId = item.id.toString();
+        item.tree_cat = [categoryId, parentId];
+        let parent = categories.find((li) => li.id.toString() === parentId);
+        while (parent && parent.parent !== 0) {
+          parentId = parent.parent.toString();
+          item.tree_cat.push(parentId);
+          parent = categories.find((li) => li.id.toString() === parentId);
+        }
+      } else {
+        item.tree_cat = [item.id.toString()];
+      }
+    });
+    categories.forEach(async (item) => {
+      await this.categoryRepository.update(
+        { id: item.id },
+        {
+          tree_cat: item.tree_cat,
+        },
+      );
+    });
+
+    return categories;
+  }
+
+  async setLast(admin: AdminEntity) {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این بخش نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const queryBuilder = this.categoryRepository.createQueryBuilder('category');
+
+    queryBuilder.orderBy('category.id', 'DESC');
+
+    const categories = await queryBuilder.getMany();
+
+    categories.forEach(async (category) => {
+      let status: any;
+      categories.forEach((categoryItem) => {
+        if (category.id === categoryItem.parent) {
+          status = 1;
+        }
+      });
+      if (status === 1) category.isLast = 0;
+      else category.isLast = 1;
+
+      await this.categoryRepository.update(
+        { id: category.id },
+        {
+          ...category,
+        },
+      );
+    });
+
+    return categories;
   }
 
   async deleteCategory(
