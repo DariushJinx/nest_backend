@@ -38,6 +38,15 @@ export class BlogEntity {
   @Column('simple-array')
   tags: string[];
 
+  @Column({ default: 0 })
+  parent: number;
+
+  @Column({ default: 0 })
+  isLast: number;
+
+  @Column('simple-array')
+  tree_blog: string[];
+
   @ManyToOne(() => CategoryEntity, (category) => category.blogs, {
     eager: true,
   })
