@@ -20,6 +20,12 @@ export class CreateBlogDto {
   category: string;
   @IsOptional()
   @Expose()
+  parent: number;
+  @IsOptional()
+  @Expose()
+  tree_blog: string[];
+  @IsOptional()
+  @Expose()
   @Matches(/(\.png|\.jpg|\.webp|\.jpeg|\.gif)$/, {
     message: 'تصویر ارسال شده صحیح نمیباشد',
   })
