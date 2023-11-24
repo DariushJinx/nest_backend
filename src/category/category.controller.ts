@@ -52,6 +52,18 @@ export class CategoryController {
     return this.categoryService.getListOfCategories(query);
   }
 
+  @Get('tree_cat')
+  @UseGuards(AdminAuthGuard)
+  async reIndexTreeCategory(@Admin() admin: AdminEntity) {
+    return await this.categoryService.reIndexTreeCategory(admin);
+  }
+
+  @Get('is_last')
+  @UseGuards(AdminAuthGuard)
+  async setLast(@Admin() admin: AdminEntity) {
+    return await this.categoryService.setLast(admin);
+  }
+
   @Get(':id')
   async getOneCategoryWithID(
     @Param('id') id: number,
