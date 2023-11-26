@@ -17,7 +17,7 @@ import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
 import { User } from 'src/decorators/user.decorators';
 import { UserEntity } from 'src/user/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from 'src/category/middlewares/multer';
+import { multerConfig } from 'src/middlewares/multer';
 import { DeleteResult } from 'typeorm';
 import { EpisodeService_2 } from './episode_2.service';
 import { CreateEpisodeDto_2 } from './dto/createEpisode_2.dto';

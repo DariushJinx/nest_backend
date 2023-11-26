@@ -18,7 +18,7 @@ import { CreateBlogDto } from './dto/blog.dto';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { BlogResponseInterface } from './types/blogResponse.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../category/middlewares/multer';
+import { multerConfig } from '../middlewares/multer';
 import { AuthGuard } from '../user/guard/auth.guard';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { BlogsResponseInterface } from './types/blogsResponse.interface';

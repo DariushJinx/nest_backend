@@ -16,7 +16,7 @@ import { CategoryService } from './category.service';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { CreateCategoryDto } from './dto/category.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from './middlewares/multer';
+import { multerConfig } from '../middlewares/multer';
 import { CategoriesResponseInterface } from './types/categoriesResponse.interface';
 import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
 import { Admin } from '../decorators/admin.decorators';

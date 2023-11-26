@@ -16,7 +16,7 @@ import { ProductService } from './product.service';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { AuthGuard } from '../user/guard/auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../category/middlewares/multer';
+import { multerConfig } from '../middlewares/multer';
 import { User } from '../decorators/user.decorators';
 import { UserEntity } from '../user/user.entity';
 import { CreateProductDto } from './dto/product.dto';

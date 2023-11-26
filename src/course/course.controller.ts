@@ -16,7 +16,7 @@ import { CourseService } from './course.service';
 import { AuthGuard } from 'src/user/guard/auth.guard';
 import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from 'src/category/middlewares/multer';
+import { multerConfig } from 'src/middlewares/multer';
 import { User } from 'src/decorators/user.decorators';
 import { UserEntity } from 'src/user/user.entity';
 import { CreateCourseDto } from './dto/course.dto';

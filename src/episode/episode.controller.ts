@@ -19,7 +19,7 @@ import { User } from 'src/decorators/user.decorators';
 import { UserEntity } from 'src/user/user.entity';
 import { CreateEpisodeDto } from './dto/createEpisode.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from 'src/category/middlewares/multer';
+import { multerConfig } from 'src/middlewares/multer';
 import { EpisodesResponseInterface } from './types/episodesResponse.interface';
 import { EpisodeResponseInterface } from './types/episodeResponse.interface';
 import { DeleteResult } from 'typeorm';
