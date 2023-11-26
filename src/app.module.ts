@@ -19,6 +19,9 @@ import { EpisodeModule_2 } from './episode_2/episode_2.module';
 import { CommentModule } from './comment/comment.module';
 import { ContactModule } from './contact/contact.module';
 import { AdminModule } from './admin/admin.module';
+import { BlogCategoryModule } from './blogCategory/blogCategory.module';
+import { CourseCategoryModule } from './courseCategory/CourseCategory.module';
+import { ProductCategoryModule } from './productCategory/productCategory.module';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { AdminModule } from './admin/admin.module';
     CommentModule,
     ContactModule,
     AdminModule,
+    BlogCategoryModule,
+    CourseCategoryModule,
+    ProductCategoryModule,
   ],
   controllers: [],
   providers: [],
