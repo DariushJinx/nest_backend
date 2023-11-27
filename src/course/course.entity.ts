@@ -1,5 +1,4 @@
 import { ChapterEntity } from '../chapter/chapter.entity';
-import { CategoryEntity } from '../category/category.entity';
 import { UserEntity } from '../user/user.entity';
 import {
   Column,
@@ -11,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OffEntity } from '../off/off.entity';
+import { CourseCategoryEntity } from '../courseCategory/CourseCategory.entity';
 
 @Entity({ name: 'course' })
 export class CourseEntity {
@@ -57,10 +57,10 @@ export class CourseEntity {
   @JoinTable()
   chapters: ChapterEntity[];
 
-  @ManyToOne(() => CategoryEntity, (category) => category.courses, {
+  @ManyToOne(() => CourseCategoryEntity, (category) => category.courses, {
     eager: true,
   })
-  category: CategoryEntity;
+  category: CourseCategoryEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.courses, { eager: true })
   teacher: UserEntity;

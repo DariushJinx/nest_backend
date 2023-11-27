@@ -1,4 +1,3 @@
-import { CategoryEntity } from '../category/category.entity';
 import { UserEntity } from '../user/user.entity';
 import {
   Column,
@@ -10,6 +9,7 @@ import {
 import { OffEntity } from '../off/off.entity';
 import { ChapterEntity_2 } from '../chapter_2/chapter_2.entity';
 import { CommentEntity } from '../comment/comment.entity';
+import { CourseCategoryEntity } from '../courseCategory/CourseCategory.entity';
 
 @Entity({ name: 'course_2' })
 export class CourseEntity_2 {
@@ -55,10 +55,10 @@ export class CourseEntity_2 {
   })
   status: string;
 
-  @ManyToOne(() => CategoryEntity, (category) => category.courses, {
+  @ManyToOne(() => CourseCategoryEntity, (category) => category.courses, {
     eager: true,
   })
-  category: CategoryEntity;
+  category: CourseCategoryEntity;
 
   @OneToMany(() => ChapterEntity_2, (chapter) => chapter.course_id)
   chapters: ChapterEntity_2[];
