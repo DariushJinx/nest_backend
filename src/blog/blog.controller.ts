@@ -77,12 +77,19 @@ export class BlogController {
   @Put(':id')
   @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
+  @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async updateOneBlogWithId(
     @Param('id') id: number,
     @Admin() admin: AdminEntity,
     @Body('') updateBlogDto: UpdateBlogDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<BlogResponseInterface> {
-    const blog = await this.blogService.updateBlog(id, admin, updateBlogDto);
+    const blog = await this.blogService.updateBlog(
+      id,
+      admin,
+      updateBlogDto,
+      files,
+    );
     return await this.blogService.buildBlogResponse(blog);
   }
 
