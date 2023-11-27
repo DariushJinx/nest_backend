@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import ormconfig from './ormconfig';
 import { UserModule } from './user/user.module';
-import { CategoryModule } from './category/category.module';
 import { BlogModule } from './blog/blog.module';
 import { AuthMiddleware } from './user/middlewares/auth.middleware';
 import { ProductModule } from './product/product.module';
@@ -35,7 +34,6 @@ import { ProductCategoryModule } from './productCategory/productCategory.module'
         configService.get('typeorm'),
     }),
     UserModule,
-    CategoryModule,
     BlogModule,
     ProductModule,
     FeatureModule,
