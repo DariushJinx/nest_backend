@@ -84,15 +84,18 @@ export class BlogCategoryController {
   @Put(':id')
   @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
+  @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async updateOneCategoryWithId(
     @Param('id') id: number,
     @Admin() admin: AdminEntity,
+    @UploadedFiles() files: Express.Multer.File[],
     @Body('') updateCategoryDto: UpdateBlogCategoryDto,
   ): Promise<BlogCategoryResponseInterface> {
     const category = await this.categoryService.updateCategory(
       id,
       admin,
       updateCategoryDto,
+      files,
     );
     return await this.categoryService.buildCategoryResponse(category);
   }
