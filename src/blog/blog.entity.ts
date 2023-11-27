@@ -1,5 +1,4 @@
 import { CommentEntity } from '../comment/comment.entity';
-import { CategoryEntity } from '../category/category.entity';
 import {
   Column,
   Entity,
@@ -8,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { AdminEntity } from '../admin/admin.entity';
+import { BlogCategoryEntity } from '../blogCategory/blogCategory.entity';
 
 @Entity({ name: 'blog' })
 export class BlogEntity {
@@ -47,10 +47,10 @@ export class BlogEntity {
   @Column('simple-array')
   tree_blog: string[];
 
-  @ManyToOne(() => CategoryEntity, (category) => category.blogs, {
+  @ManyToOne(() => BlogCategoryEntity, (category) => category.blogs, {
     eager: true,
   })
-  category: CategoryEntity;
+  category: BlogCategoryEntity;
 
   @ManyToOne(() => AdminEntity, (admin) => admin.blogs, { eager: true })
   author: AdminEntity;

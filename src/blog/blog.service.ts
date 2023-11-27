@@ -11,7 +11,7 @@ import { BlogsResponseInterface } from './types/blogsResponse.interface';
 import { UpdateBlogDto } from './dto/updateBlog.dto';
 import { CommentEntity } from '../comment/comment.entity';
 import { AdminEntity } from '../admin/admin.entity';
-import { CategoryEntity } from '../category/category.entity';
+import { BlogCategoryEntity } from '../blogCategory/blogCategory.entity';
 
 @Injectable()
 export class BlogService {
@@ -24,8 +24,8 @@ export class BlogService {
     private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
-    @InjectRepository(CategoryEntity)
-    private readonly categoryRepository: Repository<CategoryEntity>,
+    @InjectRepository(BlogCategoryEntity)
+    private readonly categoryRepository: Repository<BlogCategoryEntity>,
   ) {}
 
   async createBlog(
