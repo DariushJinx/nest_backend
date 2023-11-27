@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { AdminEntity } from '../admin/admin.entity';
+import { CourseEntity_2 } from '../course_2/course_2.entity';
 
 @Entity({ name: 'courseCategory' })
 export class CourseCategoryEntity {
@@ -21,6 +22,9 @@ export class CourseCategoryEntity {
 
   @OneToMany(() => CourseEntity, (course) => course.category)
   courses: CourseEntity[];
+
+  @OneToMany(() => CourseEntity_2, (course) => course.category)
+  allCourses: CourseEntity_2[];
 
   @ManyToOne(() => AdminEntity, (admin) => admin.categories, { eager: true })
   register: AdminEntity;

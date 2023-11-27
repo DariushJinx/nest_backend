@@ -55,7 +55,7 @@ export class CourseEntity_2 {
   })
   status: string;
 
-  @ManyToOne(() => CourseCategoryEntity, (category) => category.courses, {
+  @ManyToOne(() => CourseCategoryEntity, (category) => category.allCourses, {
     eager: true,
   })
   category: CourseCategoryEntity;
