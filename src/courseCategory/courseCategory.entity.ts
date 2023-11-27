@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { AdminEntity } from '../admin/admin.entity';
 
-@Entity({ name: 'CourseCategory' })
+@Entity({ name: 'courseCategory' })
 export class CourseCategoryEntity {
   @PrimaryGeneratedColumn()
   id: number;
