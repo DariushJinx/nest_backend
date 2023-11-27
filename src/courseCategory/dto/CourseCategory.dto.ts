@@ -10,7 +10,7 @@ export class CreateCourseCategoryDto {
   parent: number;
   @IsOptional()
   @Expose()
-  tree_comment: string[];
+  tree_cat: string[];
   @Expose()
   @IsOptional()
   @Matches(/(\.png|\.jpg|\.webp|\.jpeg|\.gif)$/, {
