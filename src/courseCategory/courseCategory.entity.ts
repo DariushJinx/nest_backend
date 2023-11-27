@@ -20,11 +20,11 @@ export class CourseCategoryEntity {
   @Column('simple-array')
   images: string[];
 
-  @OneToMany(() => CourseEntity, (course) => course.category)
-  courses: CourseEntity[];
-
   @OneToMany(() => CourseEntity_2, (course) => course.category)
-  allCourses: CourseEntity_2[];
+  courses: CourseEntity_2[];
+
+  @OneToMany(() => CourseEntity, (course) => course.category)
+  allCourses: CourseEntity[];
 
   @ManyToOne(() => AdminEntity, (admin) => admin.categories, { eager: true })
   register: AdminEntity;
