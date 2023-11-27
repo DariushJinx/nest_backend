@@ -84,15 +84,18 @@ export class CourseCategoryController {
   @Put(':id')
   @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
+  @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async updateOneCategoryWithId(
     @Param('id') id: number,
     @Admin() admin: AdminEntity,
     @Body('') updateCategoryDto: UpdateCourseCategoryDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<CourseCategoryResponseInterface> {
     const category = await this.categoryService.updateCategory(
       id,
       admin,
       updateCategoryDto,
+      files,
     );
     return await this.categoryService.buildCategoryResponse(category);
   }

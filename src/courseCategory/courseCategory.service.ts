@@ -23,6 +23,13 @@ export class CourseCategoryService {
     admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<CourseCategoryEntity> {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این بخش نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const errorResponse = {
       errors: {},
     };
@@ -52,13 +59,14 @@ export class CourseCategoryService {
     if (checkExistCategory) {
       errorResponse.errors['category'] =
         'دسته بندی وارد شده از قبل موجود می باشد';
+      errorResponse.errors['statusCode'] = HttpStatus.BAD_REQUEST;
       throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
     }
     const saveCategory = await this.categoryRepository.save(category);
 
     const categories = await this.categoryRepository.find();
 
-    categories.forEach(async (comment: any) => {
+    categories.forEach(async (categoryItem: any) => {
       if (category.parent && category.parent !== 0) {
         let parentCode = category.parent.toString();
         category.tree_cat = [category.id.toString(), parentCode];
@@ -74,8 +82,8 @@ export class CourseCategoryService {
         category.tree_cat = [category.id.toString()];
       }
       await this.categoryRepository.update(
-        { id: comment.id },
-        { tree_cat: comment.tree_cat },
+        { id: categoryItem.id },
+        { tree_cat: categoryItem.tree_cat },
       );
       await this.categoryRepository.save(saveCategory);
     });
@@ -87,8 +95,8 @@ export class CourseCategoryService {
     query: any,
   ): Promise<CourseCategoriesResponseInterface> {
     const queryBuilder = this.categoryRepository
-      .createQueryBuilder('CourseCategory')
-      .leftJoinAndSelect('CourseCategory.register', 'register');
+      .createQueryBuilder('courseCategory')
+      .leftJoinAndSelect('courseCategory.register', 'register');
 
     if (query.register) {
       const register = await this.adminRepository.findOne({
@@ -100,7 +108,7 @@ export class CourseCategoryService {
           HttpStatus.NOT_FOUND,
         );
       }
-      queryBuilder.andWhere('CourseCategory.registerId = :id', {
+      queryBuilder.andWhere('courseCategory.registerId = :id', {
         id: register.id,
       });
     }
@@ -113,7 +121,7 @@ export class CourseCategoryService {
       queryBuilder.offset(query.offset);
     }
 
-    queryBuilder.orderBy('CourseCategory.createdAt', 'DESC');
+    queryBuilder.orderBy('courseCategory.createdAt', 'DESC');
 
     const courseCategoriesCount = await queryBuilder.getCount();
     const courseCategories = await queryBuilder.getMany();
@@ -154,9 +162,9 @@ export class CourseCategoryService {
     }
 
     const queryBuilder =
-      this.categoryRepository.createQueryBuilder('CourseCategory');
+      this.categoryRepository.createQueryBuilder('courseCategory');
 
-    queryBuilder.orderBy('CourseCategory.id', 'DESC');
+    queryBuilder.orderBy('courseCategory.id', 'DESC');
 
     const categories = await queryBuilder.getMany();
 
@@ -198,9 +206,9 @@ export class CourseCategoryService {
     }
 
     const queryBuilder =
-      this.categoryRepository.createQueryBuilder('CourseCategory');
+      this.categoryRepository.createQueryBuilder('courseCategory');
 
-    queryBuilder.orderBy('CourseCategory.id', 'DESC');
+    queryBuilder.orderBy('courseCategory.id', 'DESC');
 
     const categories = await queryBuilder.getMany();
 
@@ -249,12 +257,18 @@ export class CourseCategoryService {
     id: number,
     admin: AdminEntity,
     updateCategoryDto: UpdateCourseCategoryDto,
+    files: Express.Multer.File[],
   ) {
     const errorResponse = {
       errors: {},
     };
 
     const category = await this.getOneCategory(id);
+
+    const images = FunctionUtils.ListOfImagesForRequest(
+      files,
+      updateCategoryDto.fileUploadPath,
+    );
 
     if (!admin) {
       errorResponse.errors['admin'] =
@@ -265,6 +279,8 @@ export class CourseCategoryService {
 
     Object.assign(category, updateCategoryDto);
 
+    category.images = images;
+
     delete category.register.password;
 
     return await this.categoryRepository.save(category);
@@ -274,7 +290,7 @@ export class CourseCategoryService {
     category: CourseCategoryEntity,
   ): Promise<CourseCategoryResponseInterface> {
     return {
-      category: {
+      courseCategory: {
         ...category,
       },
     };

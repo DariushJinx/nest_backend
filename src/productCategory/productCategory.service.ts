@@ -23,6 +23,12 @@ export class ProductCategoryService {
     admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<ProductCategoryEntity> {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این بخش نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     const errorResponse = {
       errors: {},
     };
@@ -52,13 +58,14 @@ export class ProductCategoryService {
     if (checkExistCategory) {
       errorResponse.errors['category'] =
         'دسته بندی وارد شده از قبل موجود می باشد';
+      errorResponse.errors['statusCode'] = HttpStatus.BAD_REQUEST;
       throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
     }
     const saveCategory = await this.categoryRepository.save(category);
 
     const categories = await this.categoryRepository.find();
 
-    categories.forEach(async (comment: any) => {
+    categories.forEach(async (categoryItem: any) => {
       if (category.parent && category.parent !== 0) {
         let parentCode = category.parent.toString();
         category.tree_cat = [category.id.toString(), parentCode];
@@ -74,8 +81,8 @@ export class ProductCategoryService {
         category.tree_cat = [category.id.toString()];
       }
       await this.categoryRepository.update(
-        { id: comment.id },
-        { tree_cat: comment.tree_cat },
+        { id: categoryItem.id },
+        { tree_cat: categoryItem.tree_cat },
       );
       await this.categoryRepository.save(saveCategory);
     });
@@ -249,12 +256,18 @@ export class ProductCategoryService {
     id: number,
     admin: AdminEntity,
     updateCategoryDto: UpdateProductCategoryDto,
+    files: Express.Multer.File[],
   ) {
     const errorResponse = {
       errors: {},
     };
 
     const category = await this.getOneCategory(id);
+
+    const images = FunctionUtils.ListOfImagesForRequest(
+      files,
+      updateCategoryDto.fileUploadPath,
+    );
 
     if (!admin) {
       errorResponse.errors['admin'] =
@@ -264,6 +277,8 @@ export class ProductCategoryService {
     }
 
     Object.assign(category, updateCategoryDto);
+
+    category.images = images;
 
     delete category.register.password;
 
