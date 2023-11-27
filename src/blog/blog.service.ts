@@ -74,7 +74,7 @@ export class BlogService {
 
     const blogs = await this.blogRepository.find();
 
-    blogs.forEach(async (comment: any) => {
+    blogs.forEach(async (blogItem: any) => {
       if (blog.parent && blog.parent !== 0) {
         let parentCode = blog.parent.toString();
         blog.tree_blog = [blog.id.toString(), parentCode];
@@ -88,15 +88,13 @@ export class BlogService {
         blog.tree_blog = [blog.id.toString()];
       }
       await this.blogRepository.update(
-        { id: comment.id },
-        { tree_blog: comment.tree_blog },
+        { id: blogItem.id },
+        { tree_blog: blogItem.tree_blog },
       );
       await this.blogRepository.save(saveBlog);
     });
 
     return saveBlog;
-
-    return await this.blogRepository.save(blog);
   }
 
   async findAllBlogs(query: any): Promise<BlogsResponseInterface> {
@@ -263,6 +261,7 @@ export class BlogService {
     id: number,
     admin: AdminEntity,
     updateBlogDto: UpdateBlogDto,
+    files: Express.Multer.File[],
   ) {
     const errorResponse = {
       errors: {},
@@ -280,11 +279,18 @@ export class BlogService {
       throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
     }
 
+    const images = FunctionUtils.ListOfImagesForRequest(
+      files,
+      updateBlogDto.fileUploadPath,
+    );
+
     Object.assign(blog, updateBlogDto);
 
     delete blog.author.password;
     delete blog.category.register;
     delete blog.category.images;
+
+    blog.images = images;
 
     return await this.blogRepository.save(blog);
   }
