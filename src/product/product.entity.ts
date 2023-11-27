@@ -1,5 +1,4 @@
 import { FeatureEntity } from '../features/feature.entity';
-import { CategoryEntity } from '../category/category.entity';
 import {
   Column,
   Entity,
@@ -12,6 +11,7 @@ import {
 import { UserEntity } from '../user/user.entity';
 import { OffEntity } from '../off/off.entity';
 import { CommentEntity } from '../comment/comment.entity';
+import { ProductCategoryEntity } from '../productCategory/productCategory.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -64,10 +64,10 @@ export class ProductEntity {
   @OneToMany(() => CommentEntity, (comment) => comment.product_id)
   comments: CommentEntity[];
 
-  @ManyToOne(() => CategoryEntity, (category) => category.products, {
+  @ManyToOne(() => ProductCategoryEntity, (category) => category.products, {
     eager: true,
   })
-  category: CategoryEntity;
+  category: ProductCategoryEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.products, { eager: true })
   supplier: UserEntity;
