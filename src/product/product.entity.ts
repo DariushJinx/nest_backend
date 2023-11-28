@@ -51,6 +51,12 @@ export class ProductEntity {
   @Column('simple-array')
   colors: string[];
 
+  @Column('simple-array')
+  tree_product: string[];
+
+  @Column('simple-array')
+  tree_product_name: string[];
+
   @Column({ default: 5 })
   productAverageScore: number;
 
