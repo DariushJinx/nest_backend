@@ -47,6 +47,9 @@ export class BlogEntity {
   @Column('simple-array')
   tree_blog: string[];
 
+  @Column('simple-array')
+  tree_blog_name: string[];
+
   @ManyToOne(() => BlogCategoryEntity, (category) => category.blogs, {
     eager: true,
   })
