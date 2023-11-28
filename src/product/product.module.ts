@@ -6,6 +6,7 @@ import { ProductEntity } from './product.entity';
 import { UserEntity } from '../user/user.entity';
 import { FeatureEntity } from '../features/feature.entity';
 import { CommentEntity } from '../comment/comment.entity';
+import { ProductCategoryEntity } from 'src/productCategory/productCategory.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CommentEntity } from '../comment/comment.entity';
       UserEntity,
       FeatureEntity,
       CommentEntity,
+      ProductCategoryEntity,
     ]),
   ],
   controllers: [ProductController],
