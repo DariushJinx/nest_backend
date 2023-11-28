@@ -11,6 +11,7 @@ import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { UpdateProductDto } from './dto/updateProduct.dto';
 import { FeatureEntity } from '../features/feature.entity';
 import { CommentEntity } from '../comment/comment.entity';
+import { ProductCategoryEntity } from 'src/productCategory/productCategory.entity';
 
 @Injectable()
 export class ProductService {
@@ -23,6 +24,8 @@ export class ProductService {
     private readonly featureRepository: Repository<FeatureEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
+    @InjectRepository(ProductCategoryEntity)
+    private readonly productCategoryRepository: Repository<ProductCategoryEntity>,
   ) {}
 
   async createProduct(
@@ -45,6 +48,23 @@ export class ProductService {
     product.slug = this.getSlug(createProductDto.title);
     product.features = features;
     product.images = images;
+
+    const productCategories = await this.productCategoryRepository.findOne({
+      where: { id: +product.category },
+    });
+
+    productCategories.tree_cat.forEach(async (item) => {
+      const category = await this.productCategoryRepository.findOne({
+        where: { id: +item },
+      });
+
+      if (category) {
+        product.tree_product_name.push(category.title);
+        product.tree_product = productCategories.tree_cat;
+      }
+      await this.productRepository.save(product);
+    });
+
     return await this.productRepository.save(product);
   }
 
