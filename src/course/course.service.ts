@@ -10,6 +10,7 @@ import { CourseResponseInterface } from './types/courseResponse.interface';
 import { CoursesResponseInterface } from './types/coursesResponse.interface';
 import { UpdateCourseDto } from './dto/updateCourse.dto';
 import { ChapterEntity } from '../chapter/chapter.entity';
+import { CourseCategoryEntity } from 'src/courseCategory/courseCategory.entity';
 
 @Injectable()
 export class CourseService {
@@ -20,6 +21,8 @@ export class CourseService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ChapterEntity)
     private readonly chapterRepository: Repository<ChapterEntity>,
+    @InjectRepository(CourseCategoryEntity)
+    private readonly courseCategoryRepository: Repository<CourseCategoryEntity>,
   ) {}
 
   async createCourse(
@@ -55,6 +58,23 @@ export class CourseService {
     delete course.teacher.password;
     course.slug = this.getSlug(createCourseDto.title);
     course.images = images;
+
+    const courseCategories = await this.courseCategoryRepository.findOne({
+      where: { id: +course.category },
+    });
+
+    courseCategories.tree_cat.forEach(async (item) => {
+      const category = await this.courseCategoryRepository.findOne({
+        where: { id: +item },
+      });
+
+      if (category) {
+        course.tree_course_name.push(category.title);
+        course.tree_course = courseCategories.tree_cat;
+      }
+      await this.courseRepository.save(course);
+    });
+
     return await this.courseRepository.save(course);
   }
 
