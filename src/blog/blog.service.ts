@@ -84,11 +84,12 @@ export class BlogService {
         where: { id: +item },
       });
 
-      blog.tree_blog_name.push(category.title);
+      if (category) {
+        blog.tree_blog_name.push(category.title);
+        blog.tree_blog = blogCategories.tree_cat;
+      }
+      await this.blogRepository.save(blog);
     });
-
-    blog.tree_blog = blogCategories.tree_cat;
-    // blog.tree_blog_name.push(blogCategories.title);
 
     await this.blogRepository.save(saveBlog);
 
@@ -157,20 +158,6 @@ export class BlogService {
     if (!blogs.length) {
       throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
     }
-
-    blogs.forEach(async (blog) => {
-      const blogCategories = await this.blogCategoryRepository.findOne({
-        where: { id: +blog.tree_blog },
-      });
-
-      if (blogCategories) {
-        const treeCatList = [];
-        for (const category in blogCategories) {
-          treeCatList.push(blogCategories[category]['title']);
-        }
-        blog.tree_blog = treeCatList;
-      }
-    });
 
     const comments = await this.commentRepository.find({
       where: { show: 1 },
