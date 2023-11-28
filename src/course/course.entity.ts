@@ -38,6 +38,12 @@ export class CourseEntity {
   @Column('simple-array')
   tags: string[];
 
+  @Column('simple-array')
+  tree_course: string[];
+
+  @Column('simple-array')
+  tree_course_name: string[];
+
   @Column({ default: 0 })
   price: number;
 
