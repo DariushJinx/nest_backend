@@ -18,6 +18,8 @@ export class BlogService {
   constructor(
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
+    @InjectRepository(BlogCategoryEntity)
+    private readonly blogCategoryRepository: Repository<BlogCategoryEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(AdminEntity)
@@ -64,6 +66,7 @@ export class BlogService {
     delete createBlogDto.filename;
     Object.assign(blog, createBlogDto);
     blog.tree_blog = [];
+    blog.tree_blog_name = [];
     blog.author = admin;
     delete blog.author.password;
     blog.images = images;
@@ -72,27 +75,22 @@ export class BlogService {
 
     const saveBlog = await this.blogRepository.save(blog);
 
-    const blogs = await this.blogRepository.find();
-
-    blogs.forEach(async (blogItem: any) => {
-      if (blog.parent && blog.parent !== 0) {
-        let parentCode = blog.parent.toString();
-        blog.tree_blog = [blog.id.toString(), parentCode];
-        let parent = blogs.find((item) => item.id.toString() === parentCode);
-        while (parent && parent.parent !== 0) {
-          parentCode = parent.parent.toString();
-          blog.tree_blog.push(parentCode);
-          parent = blogs.find((item) => item.id.toString() === parentCode);
-        }
-      } else {
-        blog.tree_blog = [blog.id.toString()];
-      }
-      await this.blogRepository.update(
-        { id: blogItem.id },
-        { tree_blog: blogItem.tree_blog },
-      );
-      await this.blogRepository.save(saveBlog);
+    const blogCategories = await this.blogCategoryRepository.findOne({
+      where: { id: +saveBlog.category },
     });
+
+    blogCategories.tree_cat.forEach(async (item) => {
+      const category = await this.blogCategoryRepository.findOne({
+        where: { id: +item },
+      });
+
+      blog.tree_blog_name.push(category.title);
+    });
+
+    blog.tree_blog = blogCategories.tree_cat;
+    // blog.tree_blog_name.push(blogCategories.title);
+
+    await this.blogRepository.save(saveBlog);
 
     return saveBlog;
   }
@@ -159,6 +157,20 @@ export class BlogService {
     if (!blogs.length) {
       throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
     }
+
+    blogs.forEach(async (blog) => {
+      const blogCategories = await this.blogCategoryRepository.findOne({
+        where: { id: +blog.tree_blog },
+      });
+
+      if (blogCategories) {
+        const treeCatList = [];
+        for (const category in blogCategories) {
+          treeCatList.push(blogCategories[category]['title']);
+        }
+        blog.tree_blog = treeCatList;
+      }
+    });
 
     const comments = await this.commentRepository.find({
       where: { show: 1 },
