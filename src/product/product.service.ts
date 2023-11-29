@@ -2,14 +2,13 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from './product.entity';
 import { UserEntity } from '../user/user.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ProductResponseInterface } from './types/productResponse.interface';
 import { CreateProductDto } from './dto/product.dto';
 import { FunctionUtils } from '../utils/functions.utils';
 import slugify from 'slugify';
 import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { UpdateProductDto } from './dto/updateProduct.dto';
-import { FeatureEntity } from '../features/feature.entity';
 import { CommentEntity } from '../comment/comment.entity';
 import { ProductCategoryEntity } from 'src/productCategory/productCategory.entity';
 import { AdminEntity } from 'src/admin/admin.entity';
@@ -21,8 +20,6 @@ export class ProductService {
     private readonly productRepository: Repository<ProductEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    @InjectRepository(FeatureEntity)
-    private readonly featureRepository: Repository<FeatureEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
     @InjectRepository(ProductCategoryEntity)
@@ -30,12 +27,30 @@ export class ProductService {
   ) {}
 
   async createProduct(
-    currentUser: AdminEntity,
+    admin: AdminEntity,
     createProductDto: CreateProductDto,
     files: Express.Multer.File[],
-    featureIds: number[],
   ): Promise<ProductEntity> {
-    const features = await this.featureRepository.findByIds(featureIds);
+    const errorResponse = {
+      errors: {},
+    };
+
+    if (!admin) {
+      errorResponse.errors['error'] = 'شما مجاز به ثبت محصول نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    const checkExistsCategory = await this.productCategoryRepository.findOne({
+      where: { id: Number(createProductDto.category) },
+    });
+
+    if (!checkExistsCategory) {
+      errorResponse.errors['category'] = 'دسته بندی مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
     const product = new ProductEntity();
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
@@ -44,13 +59,14 @@ export class ProductService {
     delete createProductDto.fileUploadPath;
     delete createProductDto.filename;
     Object.assign(product, createProductDto);
-    product.supplier = currentUser;
+    product.supplier = admin;
     product.tree_product = [];
     product.tree_product_name = [];
     delete product.supplier.password;
     product.slug = this.getSlug(createProductDto.title);
-    product.features = features;
     product.images = images;
+
+    const saveProduct = await this.productRepository.save(product);
 
     const productCategories = await this.productCategoryRepository.findOne({
       where: { id: +product.category },
@@ -61,20 +77,15 @@ export class ProductService {
         where: { id: +item },
       });
 
-      if (category) {
-        product.tree_product_name.push(category.title);
-        product.tree_product = productCategories.tree_cat;
-      }
+      product.tree_product_name.push(category.title);
+      product.tree_product = productCategories.tree_cat;
       await this.productRepository.save(product);
     });
 
-    return await this.productRepository.save(product);
+    return await this.productRepository.save(saveProduct);
   }
 
-  async findAllProducts(
-    currentUser: number,
-    query: any,
-  ): Promise<ProductsResponseInterface> {
+  async findAllProducts(query: any): Promise<ProductsResponseInterface> {
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.supplier', 'supplier');
@@ -95,6 +106,14 @@ export class ProductService {
       const supplier = await this.userRepository.findOne({
         where: { username: query.supplier },
       });
+
+      if (!supplier) {
+        throw new HttpException(
+          'محصولی با این مشخصات یافت نشد',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       queryBuilder.andWhere('product.supplierId = :id', {
         id: supplier.id,
       });
@@ -112,14 +131,23 @@ export class ProductService {
 
     const productsCount = await queryBuilder.getCount();
     const products = await queryBuilder.getMany();
+
+    if (!products.length) {
+      throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
     return { products, productsCount };
   }
 
-  async findAllProductsWithRating(user: UserEntity) {
+  async findAllProductsWithRating() {
     const products = await this.productRepository.find();
     const comments = await this.commentRepository.find({
       where: { show: 1 },
     });
+
+    if (!products.length) {
+      throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
+    }
 
     const allProducts = [];
 
@@ -146,6 +174,13 @@ export class ProductService {
         ...product,
         productAverageScore: average,
       });
+
+      products.forEach((course) => {
+        delete course.supplier.password;
+        delete course.category.register;
+        delete course.category.images;
+      });
+
       await this.productRepository.save(allProducts);
     });
 
@@ -158,43 +193,77 @@ export class ProductService {
       relations: ['features'],
     });
 
+    if (!product) {
+      throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
     return product;
   }
 
   async getOneProductWithID(id: number): Promise<ProductEntity> {
-    return await this.productRepository.findOne({
+    const product = await this.productRepository.findOne({
       where: { id: id },
     });
+
+    if (!product) {
+      throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
+    return product;
   }
 
-  async deleteOneProductWithSlug(slug: string): Promise<DeleteResult> {
+  async deleteOneProductWithSlug(
+    slug: string,
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به حذف محصول نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const product = await this.getOneProductWithSlug(slug);
     if (!product) {
       throw new HttpException('کالا مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
 
-    return await this.productRepository.delete({ slug });
+    await this.productRepository.delete({ slug });
+
+    return {
+      message: 'محصول مورد نظر با موفقیت حذف شد',
+    };
   }
 
   async updateProduct(
     id: number,
-    currentUserID: number,
+    admin: AdminEntity,
     updateProductDto: UpdateProductDto,
-    featureIds: number[],
+    files: Express.Multer.File[],
   ) {
-    const features = await this.featureRepository.findByIds(featureIds);
     const product = await this.getOneProductWithID(id);
 
     if (!product) {
       throw new HttpException('product does not exist', HttpStatus.NOT_FOUND);
     }
 
-    if (product.supplier.id !== currentUserID) {
-      throw new HttpException('you are not an supplier', HttpStatus.FORBIDDEN);
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به به روز رسانی محصول نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
+    const images = FunctionUtils.ListOfImagesForRequest(
+      files,
+      updateProductDto.fileUploadPath,
+    );
+
     Object.assign(product, updateProductDto);
-    product.features = features;
+
+    product.images = images;
 
     return await this.productRepository.save(product);
   }
