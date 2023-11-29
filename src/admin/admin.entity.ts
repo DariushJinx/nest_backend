@@ -8,6 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BlogCategoryEntity } from '../blogCategory/blogCategory.entity';
+import { CourseEntity_2 } from '../course_2/course_2.entity';
+import { ProductEntity } from '../product/product.entity';
 
 @Entity({ name: 'admin' })
 export class AdminEntity {
@@ -45,4 +47,10 @@ export class AdminEntity {
 
   @OneToMany(() => BlogCategoryEntity, (blog) => blog.register)
   categories: BlogCategoryEntity[];
+
+  @OneToMany(() => CourseEntity_2, (course) => course.teacher)
+  courses: CourseEntity_2[];
+
+  @OneToMany(() => ProductEntity, (product) => product.supplier)
+  products: ProductEntity[];
 }
