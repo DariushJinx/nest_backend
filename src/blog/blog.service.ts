@@ -26,8 +26,6 @@ export class BlogService {
     private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
-    @InjectRepository(BlogCategoryEntity)
-    private readonly categoryRepository: Repository<BlogCategoryEntity>,
   ) {}
 
   async createBlog(
@@ -39,7 +37,7 @@ export class BlogService {
       errors: {},
     };
 
-    const checkExistsCategory = await this.categoryRepository.findOne({
+    const checkExistsCategory = await this.blogCategoryRepository.findOne({
       where: { id: Number(createBlogDto.category) },
     });
 
