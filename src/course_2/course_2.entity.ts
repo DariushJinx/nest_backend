@@ -1,4 +1,3 @@
-import { UserEntity } from '../user/user.entity';
 import {
   Column,
   Entity,
@@ -10,6 +9,7 @@ import { OffEntity } from '../off/off.entity';
 import { ChapterEntity_2 } from '../chapter_2/chapter_2.entity';
 import { CommentEntity } from '../comment/comment.entity';
 import { CourseCategoryEntity } from '../courseCategory/courseCategory.entity';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Entity({ name: 'course_2' })
 export class CourseEntity_2 {
@@ -69,8 +69,8 @@ export class CourseEntity_2 {
   @OneToMany(() => ChapterEntity_2, (chapter) => chapter.course_id)
   chapters: ChapterEntity_2[];
 
-  @ManyToOne(() => UserEntity, (user) => user.courses, { eager: true })
-  teacher: UserEntity;
+  @ManyToOne(() => AdminEntity, (user) => user.courses, { eager: true })
+  teacher: AdminEntity;
 
   @OneToMany(() => OffEntity, (off) => off.id)
   offs: OffEntity[];
