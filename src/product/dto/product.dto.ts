@@ -34,9 +34,6 @@ export class CreateProductDto {
   @IsOptional()
   @Expose()
   colors: string[];
-  @IsOptional()
-  @Expose()
-  featureIds: number[];
   @Expose()
   @Matches(/(\.png|\.jpg|\.webp|\.jpeg|\.gif)$/, {
     message: 'تصویر ارسال شده صحیح نمیباشد',
