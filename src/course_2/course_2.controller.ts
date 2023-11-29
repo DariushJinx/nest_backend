@@ -12,34 +12,35 @@ import {
   UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/user/guard/auth.guard';
 import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'src/middlewares/multer';
 import { User } from 'src/decorators/user.decorators';
-import { UserEntity } from 'src/user/user.entity';
-import { DeleteResult } from 'typeorm';
 import { CourseService_2 } from './course_2.service';
 import { CreateCourseDto_2 } from './dto/course_2.dto';
 import { CoursesResponseInterface_2 } from './types/coursesResponse_2.interface';
 import { CourseResponseInterface_2 } from './types/courseResponse_2.interface';
 import { UpdateCourseDto_2 } from './dto/updateCourse_2.dto';
+import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
+import { AuthGuard } from 'src/user/guard/auth.guard';
+import { AdminEntity } from 'src/admin/admin.entity';
+import { Admin } from 'src/decorators/admin.decorators';
 
 @Controller('course_2')
 export class CourseController_2 {
   constructor(private readonly courseService: CourseService_2) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async createCourse(
-    @User() currentUser: UserEntity,
+    @Admin() admin: AdminEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() createCourseDto: CreateCourseDto_2,
   ) {
     const course = await this.courseService.createCourse(
-      currentUser,
+      admin,
       createCourseDto,
       files,
     );
@@ -48,15 +49,14 @@ export class CourseController_2 {
 
   @Get('list')
   async findAllCourses(
-    @User() currentUser: number,
     @Query() query: any,
   ): Promise<CoursesResponseInterface_2> {
-    return await this.courseService.findAllCourses(currentUser, query);
+    return await this.courseService.findAllCourses(query);
   }
 
   @Get('all_courses')
-  async findAllCoursesWithRating(@User() user: UserEntity) {
-    return await this.courseService.findAllCoursesWithRating(user);
+  async findAllCoursesWithRating() {
+    return await this.courseService.findAllCoursesWithRating();
   }
 
   @Get(':id')
@@ -68,24 +68,29 @@ export class CourseController_2 {
   }
 
   @Delete(':slug')
-  @UseGuards(AuthGuard)
-  async deleteOneCourse(@Param('slug') slug: string): Promise<DeleteResult> {
-    return await this.courseService.deleteOneCourseWithSlug(slug);
+  @UseGuards(AdminAuthGuard)
+  async deleteOneCourse(
+    @Param('slug') slug: string,
+    @Admin() admin: AdminEntity,
+  ) {
+    return await this.courseService.deleteOneCourseWithSlug(slug, admin);
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async updateOneCourseWithId(
     @Param('id') id: number,
-    @User('id') currentUserID: number,
+    @Admin() admin: AdminEntity,
     @Body('') updateCourseDto: UpdateCourseDto_2,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<CourseResponseInterface_2> {
     const course = await this.courseService.updateCourse(
       id,
-      currentUserID,
+      admin,
       updateCourseDto,
+      files,
     );
     return await this.courseService.buildCourseResponse(course);
   }
