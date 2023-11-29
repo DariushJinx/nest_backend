@@ -12,6 +12,7 @@ const config = {
   migrations: [__dirname + '/migration/*{.ts,.js}'],
   synchronize: false,
   migrationsRun: true,
+  autoLoadEntities: true,
 };
 
 export default registerAs('typeorm', () => config);
