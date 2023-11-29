@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { ProductEntity } from '../product/product.entity';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'features' })
 export class FeatureEntity {
@@ -10,6 +11,11 @@ export class FeatureEntity {
 
   @Column()
   description: string;
+
+  @ManyToOne(() => ProductEntity, (course) => course.features, {
+    eager: true,
+  })
+  product_id: ProductEntity;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
