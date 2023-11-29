@@ -10,7 +10,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProductEntity } from '../product/product.entity';
-import { CourseEntity } from '../course/course.entity';
 import { OffEntity } from '../off/off.entity';
 import { CourseEntity_2 } from '../course_2/course_2.entity';
 import { CommentEntity } from '../comment/comment.entity';
@@ -55,8 +54,8 @@ export class UserEntity {
   @OneToMany(() => ProductEntity, (product) => product.supplier)
   products: ProductEntity[];
 
-  @OneToMany(() => CourseEntity, (course) => course.teacher)
-  courses: CourseEntity[];
+  @OneToMany(() => CourseEntity_2, (course) => course.teacher)
+  courses: CourseEntity_2[];
 
   @OneToMany(() => OffEntity, (off) => off.creator)
   offs: OffEntity[];
@@ -72,10 +71,6 @@ export class UserEntity {
   @ManyToMany(() => ProductEntity)
   @JoinTable()
   favoritesProducts: ProductEntity[];
-
-  @ManyToMany(() => CourseEntity)
-  @JoinTable()
-  favoriteCourses: CourseEntity[];
 
   @ManyToMany(() => CourseEntity_2)
   @JoinTable()
