@@ -8,10 +8,10 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { UserEntity } from '../user/user.entity';
 import { OffEntity } from '../off/off.entity';
 import { CommentEntity } from '../comment/comment.entity';
 import { ProductCategoryEntity } from '../productCategory/productCategory.entity';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -75,8 +75,8 @@ export class ProductEntity {
   })
   category: ProductCategoryEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.products, { eager: true })
-  supplier: UserEntity;
+  @ManyToOne(() => AdminEntity, (user) => user.products, { eager: true })
+  supplier: AdminEntity;
 
   @OneToMany(() => OffEntity, (off) => off.id)
   offs: OffEntity[];
