@@ -1,17 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { FunctionUtils } from '../utils/functions.utils';
 import slugify from 'slugify';
-import { ChapterEntity } from '../chapter/chapter.entity';
 import { CourseEntity_2 } from './course_2.entity';
 import { CreateCourseDto_2 } from './dto/course_2.dto';
 import { CoursesResponseInterface_2 } from './types/coursesResponse_2.interface';
 import { UpdateCourseDto_2 } from './dto/updateCourse_2.dto';
 import { CourseResponseInterface_2 } from './types/courseResponse_2.interface';
 import { CommentEntity } from '../comment/comment.entity';
-import { CourseCategoryEntity } from 'src/courseCategory/courseCategory.entity';
+import { CourseCategoryEntity } from '../courseCategory/courseCategory.entity';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Injectable()
 export class CourseService_2 {
@@ -20,6 +20,8 @@ export class CourseService_2 {
     private readonly courseRepository: Repository<CourseEntity_2>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(AdminEntity)
+    private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CourseCategoryEntity)
     private readonly courseCategoryRepository: Repository<CourseCategoryEntity>,
     @InjectRepository(CommentEntity)
@@ -27,35 +29,58 @@ export class CourseService_2 {
   ) {}
 
   async createCourse(
-    currentUser: UserEntity,
+    admin: AdminEntity,
     createCourseDto: CreateCourseDto_2,
     files: Express.Multer.File[],
-  ): Promise<CourseEntity_2> {
+  ) {
+    const errorResponse = {
+      errors: {},
+    };
+
+    if (!admin) {
+      errorResponse.errors['error'] = 'شما مجاز به ثبت دوره نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    const checkExistsCategory = await this.courseCategoryRepository.findOne({
+      where: { id: Number(createCourseDto.category) },
+    });
+
+    if (!checkExistsCategory) {
+      errorResponse.errors['category'] = 'دسته بندی مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
+    }
     const course = new CourseEntity_2();
     const images = FunctionUtils.ListOfImagesForRequest(
       files,
       createCourseDto.fileUploadPath,
     );
+
     Object.assign(course, createCourseDto);
-    course.teacher = currentUser;
+    course.teacher = admin;
     if (Number(createCourseDto.price) > 0 && createCourseDto.type === 'free') {
-      throw new HttpException(
-        'برای دوره ی رایگان نمیتوان قیمت ثبت کرد',
-        HttpStatus.BAD_REQUEST,
-      );
+      errorResponse.errors['error'] = 'برای دوره ی رایگان نمیتوان قیمت ثبت کرد';
+      errorResponse.errors['statusCode'] = HttpStatus.BAD_REQUEST;
+      throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
     }
     if (
       Number(createCourseDto.price) === 0 &&
       createCourseDto.type !== 'free'
     ) {
-      throw new HttpException(
-        'برای دوره ی غیر رایگان باید قیمت تعیین کرد',
-        HttpStatus.BAD_REQUEST,
-      );
+      errorResponse.errors['error'] =
+        'برای دوره ی غیر رایگان باید قیمت تعیین کرد';
+      errorResponse.errors['statusCode'] = HttpStatus.BAD_REQUEST;
+      throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
     }
     delete course.teacher.password;
     course.slug = this.getSlug(createCourseDto.title);
     course.images = images;
+    course.tree_course = [];
+    course.tree_course_name = [];
+
+    const saveCourse = await this.courseRepository.save(course);
 
     const courseCategories = await this.courseCategoryRepository.findOne({
       where: { id: +course.category },
@@ -66,20 +91,15 @@ export class CourseService_2 {
         where: { id: +item },
       });
 
-      if (category) {
-        course.tree_course_name.push(category.title);
-        course.tree_course = courseCategories.tree_cat;
-      }
+      course.tree_course_name.push(category.title);
+      course.tree_course = courseCategories.tree_cat;
       await this.courseRepository.save(course);
     });
 
-    return await this.courseRepository.save(course);
+    return await this.courseRepository.save(saveCourse);
   }
 
-  async findAllCourses(
-    currentUser: number,
-    query: any,
-  ): Promise<CoursesResponseInterface_2> {
+  async findAllCourses(query: any): Promise<CoursesResponseInterface_2> {
     const queryBuilder = this.courseRepository
       .createQueryBuilder('course')
       .leftJoinAndSelect('course.teacher', 'teacher');
@@ -97,9 +117,17 @@ export class CourseService_2 {
     }
 
     if (query.teacher) {
-      const teacher = await this.userRepository.findOne({
+      const teacher = await this.adminRepository.findOne({
         where: { username: query.teacher },
       });
+
+      if (!teacher) {
+        throw new HttpException(
+          'دوره ای با این مشخصات یافت نشد',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       queryBuilder.andWhere('course.teacherId = :id', {
         id: teacher.id,
       });
@@ -117,15 +145,24 @@ export class CourseService_2 {
 
     const coursesCount = await queryBuilder.getCount();
     const courses = await queryBuilder.getMany();
+
+    if (!courses.length) {
+      throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
     courses.map((course) => delete course.teacher.password);
     return { courses, coursesCount };
   }
 
-  async findAllCoursesWithRating(user: UserEntity) {
+  async findAllCoursesWithRating() {
     const courses = await this.courseRepository.find();
     const comments = await this.commentRepository.find({
       where: { show: 1 },
     });
+
+    if (!courses.length) {
+      throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
+    }
 
     const allCourses = [];
 
@@ -152,6 +189,13 @@ export class CourseService_2 {
         ...course,
         courseAverageScore: average,
       });
+
+      courses.forEach((course) => {
+        delete course.teacher.password;
+        delete course.category.register;
+        delete course.category.images;
+      });
+
       await this.courseRepository.save(allCourses);
     });
 
@@ -164,7 +208,12 @@ export class CourseService_2 {
       relations: ['chapters', 'chapters.episodes', 'comments'],
     });
 
+    if (!course) {
+      throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
     delete course.teacher.password;
+    delete course.category.register.password;
     course.chapters.map((chapter) => delete chapter.course_id);
     course.chapters.map((chapter) =>
       chapter.episodes.map((episode) => {
@@ -175,44 +224,61 @@ export class CourseService_2 {
   }
 
   async getOneCourseWithSlug(slug: string): Promise<CourseEntity_2> {
-    const product = await this.courseRepository.findOne({
+    const course = await this.courseRepository.findOne({
       where: { slug: slug },
     });
 
-    return product;
+    if (!course) {
+      throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
+    }
+
+    return course;
   }
 
-  async deleteOneCourseWithSlug(slug: string): Promise<DeleteResult> {
-    const course = await this.getOneCourseWithSlug(slug);
-    if (!course) {
-      throw new HttpException('دوره مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
-    }
-    if (course.teacher.role !== 'ADMIN') {
+  async deleteOneCourseWithSlug(
+    slug: string,
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف دوره نیستید',
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNAUTHORIZED,
       );
     }
+    await this.getOneCourseWithSlug(slug);
 
-    return await this.courseRepository.delete({ slug });
+    await this.courseRepository.delete({ slug });
+
+    return {
+      message: 'دوره مورد نظر با موفقیت حذف شد',
+    };
   }
 
   async updateCourse(
     id: number,
-    currentUserID: number,
+    admin: AdminEntity,
     updateCourseDto: UpdateCourseDto_2,
+    files: Express.Multer.File[],
   ) {
     const course = await this.currentCourse(id);
 
-    if (!course) {
-      throw new HttpException('course does not exist', HttpStatus.NOT_FOUND);
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به به روز رسانی دوره نیستید',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
-    if (course.teacher.id !== currentUserID) {
-      throw new HttpException('you are not an teacher', HttpStatus.FORBIDDEN);
-    }
+    const images = FunctionUtils.ListOfImagesForRequest(
+      files,
+      updateCourseDto.fileUploadPath,
+    );
 
     Object.assign(course, updateCourseDto);
+
+    course.images = images;
 
     if (
       Number(updateCourseDto.price) > 0 &&
