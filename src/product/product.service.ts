@@ -12,6 +12,7 @@ import { UpdateProductDto } from './dto/updateProduct.dto';
 import { FeatureEntity } from '../features/feature.entity';
 import { CommentEntity } from '../comment/comment.entity';
 import { ProductCategoryEntity } from 'src/productCategory/productCategory.entity';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Injectable()
 export class ProductService {
@@ -29,7 +30,7 @@ export class ProductService {
   ) {}
 
   async createProduct(
-    currentUser: UserEntity,
+    currentUser: AdminEntity,
     createProductDto: CreateProductDto,
     files: Express.Multer.File[],
     featureIds: number[],
@@ -44,6 +45,8 @@ export class ProductService {
     delete createProductDto.filename;
     Object.assign(product, createProductDto);
     product.supplier = currentUser;
+    product.tree_product = [];
+    product.tree_product_name = [];
     delete product.supplier.password;
     product.slug = this.getSlug(createProductDto.title);
     product.features = features;
@@ -168,12 +171,6 @@ export class ProductService {
     const product = await this.getOneProductWithSlug(slug);
     if (!product) {
       throw new HttpException('کالا مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
-    }
-    if (product.supplier.role !== 'ADMIN') {
-      throw new HttpException(
-        'شما مجاز به حذف کالا نیستید',
-        HttpStatus.FORBIDDEN,
-      );
     }
 
     return await this.productRepository.delete({ slug });
