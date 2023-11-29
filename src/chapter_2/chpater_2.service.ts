@@ -2,7 +2,6 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
-import { EpisodeEntity } from '../episode/episode.entity';
 import { CreateChapterDto_2 } from './dto/createChpater_2.dto';
 import { ChapterEntity_2 } from './chapter_2.entity';
 import { ChaptersResponseInterface_2 } from './types/chaptersResponse_2.interface';
@@ -19,8 +18,6 @@ export class ChapterService_2 {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(CourseEntity_2)
     private readonly courseRepository: Repository<CourseEntity_2>,
-    @InjectRepository(EpisodeEntity)
-    private readonly episodeRepository: Repository<EpisodeEntity>,
   ) {}
 
   async createChapter(
