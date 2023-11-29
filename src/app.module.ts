@@ -8,9 +8,6 @@ import { AuthMiddleware } from './user/middlewares/auth.middleware';
 import { ProductModule } from './product/product.module';
 import { FeatureModule } from './features/feature.module';
 import { ProfileModule } from './profile/profile.module';
-import { CourseModule } from './course/course.module';
-import { ChapterModule } from './chapter/chapter.module';
-import { EpisodeModule } from './episode/episode.module';
 import { OffModule } from './off/off.module';
 import { CourseModule_2 } from './course_2/course_2.module';
 import { ChapterModule_2 } from './chapter_2/chapter_2.module';
@@ -38,11 +35,8 @@ import { ProductCategoryModule } from './productCategory/productCategory.module'
     ProductModule,
     FeatureModule,
     ProfileModule,
-    CourseModule,
     CourseModule_2,
-    ChapterModule,
     ChapterModule_2,
-    EpisodeModule,
     EpisodeModule_2,
     OffModule,
     CommentModule,
