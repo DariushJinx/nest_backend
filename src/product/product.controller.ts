@@ -18,11 +18,9 @@ import { AuthGuard } from '../user/guard/auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../middlewares/multer';
 import { User } from '../decorators/user.decorators';
-import { UserEntity } from '../user/user.entity';
 import { CreateProductDto } from './dto/product.dto';
 import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { ProductResponseInterface } from './types/productResponse.interface';
-import { DeleteResult } from 'typeorm';
 import { UpdateProductDto } from './dto/updateProduct.dto';
 import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
 import { Admin } from 'src/decorators/admin.decorators';
@@ -37,31 +35,28 @@ export class ProductController {
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async createProduct(
-    @Admin() currentUser: AdminEntity,
+    @Admin() admin: AdminEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() createProductDto: CreateProductDto,
-    @Body('featureIds') featureIds: number[],
   ) {
     const product = await this.productService.createProduct(
-      currentUser,
+      admin,
       createProductDto,
       files,
-      featureIds,
     );
     return await this.productService.buildProductResponse(product);
   }
 
   @Get('list')
   async findAllProducts(
-    @User() currentUser: number,
     @Query() query: any,
   ): Promise<ProductsResponseInterface> {
-    return await this.productService.findAllProducts(currentUser, query);
+    return await this.productService.findAllProducts(query);
   }
 
   @Get('all_products')
-  async findAllProductsWithRating(@User() user: UserEntity) {
-    return await this.productService.findAllProductsWithRating(user);
+  async findAllProductsWithRating() {
+    return await this.productService.findAllProductsWithRating();
   }
 
   @Get(':id')
@@ -73,26 +68,29 @@ export class ProductController {
   }
 
   @Delete(':slug')
-  @UseGuards(AuthGuard)
-  async deleteOneProduct(@Param('slug') slug: string): Promise<DeleteResult> {
-    return await this.productService.deleteOneProductWithSlug(slug);
+  @UseGuards(AdminAuthGuard)
+  async deleteOneProduct(
+    @Param('slug') slug: string,
+    @Admin() admin: AdminEntity,
+  ) {
+    return await this.productService.deleteOneProductWithSlug(slug, admin);
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async updateOneProductWithId(
     @Param('id') id: number,
-    @User('id') currentUserID: number,
+    @Admin() admin: AdminEntity,
     @Body('') updateProductDto: UpdateProductDto,
-    @Body('featureIds') featureIds: number[],
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<ProductResponseInterface> {
     const product = await this.productService.updateProduct(
       id,
-      currentUserID,
+      admin,
       updateProductDto,
-      featureIds,
+      files,
     );
     return await this.productService.buildProductResponse(product);
   }
