@@ -24,17 +24,20 @@ import { ProductsResponseInterface } from './types/productsResponse.interface';
 import { ProductResponseInterface } from './types/productResponse.interface';
 import { DeleteResult } from 'typeorm';
 import { UpdateProductDto } from './dto/updateProduct.dto';
+import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
+import { Admin } from 'src/decorators/admin.decorators';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FilesInterceptor('images', 10, multerConfig))
   async createProduct(
-    @User() currentUser: UserEntity,
+    @Admin() currentUser: AdminEntity,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() createProductDto: CreateProductDto,
     @Body('featureIds') featureIds: number[],
