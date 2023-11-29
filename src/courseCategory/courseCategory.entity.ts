@@ -1,4 +1,3 @@
-import { CourseEntity } from '../course/course.entity';
 import {
   Column,
   Entity,
@@ -22,9 +21,6 @@ export class CourseCategoryEntity {
 
   @OneToMany(() => CourseEntity_2, (course) => course.category)
   courses: CourseEntity_2[];
-
-  @OneToMany(() => CourseEntity, (course) => course.category)
-  allCourses: CourseEntity[];
 
   @ManyToOne(() => AdminEntity, (admin) => admin.categories, { eager: true })
   register: AdminEntity;
