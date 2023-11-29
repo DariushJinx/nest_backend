@@ -23,14 +23,14 @@ export class ProfileService {
       relations: [
         'favorites',
         'favoritesProducts',
-        'favoriteCourses',
+        'favoriteCourses_2',
         'comments',
       ],
     });
 
     user.favoritesProducts.map((product) => delete product.supplier.password);
     user.favorites.map((blog) => delete blog.author.password);
-    user.favoriteCourses.map((course) => delete course.teacher.password);
+    user.favoriteCourses_2.map((course) => delete course.teacher.password);
 
     if (!user) {
       throw new HttpException('پروفایلی یافت نشد ...', HttpStatus.NOT_FOUND);
