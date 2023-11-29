@@ -2,8 +2,6 @@ import { FeatureEntity } from '../features/feature.entity';
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -60,11 +58,7 @@ export class ProductEntity {
   @Column({ default: 5 })
   productAverageScore: number;
 
-  @Column('simple-array')
-  featureIds: string[];
-
-  @ManyToMany(() => FeatureEntity)
-  @JoinTable()
+  @OneToMany(() => FeatureEntity, (chapter) => chapter.product_id)
   features: FeatureEntity[];
 
   @OneToMany(() => CommentEntity, (comment) => comment.product_id)
