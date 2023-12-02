@@ -8,6 +8,7 @@ import { AdminEntity } from './admin.entity';
 import { AdminRegisterDto } from './dto/adminRegister.dto';
 import { AdminLoginDto } from './dto/adminLogin.dto';
 import { AdminResponseInterface } from './types/AdminResponse.interface';
+import { AdminBanResponseInterface } from './types/adminBanResponse.interface';
 
 @Injectable()
 export class AdminService {
@@ -144,6 +145,8 @@ export class AdminService {
 
     await this.adminRepository.save(admin);
 
+    delete admin.password;
+
     return admin;
   }
 
@@ -203,6 +206,16 @@ export class AdminService {
       admin: {
         ...admin,
         adminToken: this.generateAdminJwtToken(admin),
+      },
+    };
+  }
+
+  async buildBanAdminResponse(
+    admin: AdminEntity,
+  ): Promise<AdminBanResponseInterface> {
+    return {
+      admin: {
+        ...admin,
       },
     };
   }

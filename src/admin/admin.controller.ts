@@ -43,6 +43,6 @@ export class AdminController {
   @UseGuards(AdminAuthGuard)
   async banAdmin(@Admin() currentAdmin: AdminEntity, @Param('id') id: number) {
     const admin = await this.adminService.banAdmin(currentAdmin, id);
-    return await this.adminService.buildAdminResponse(admin);
+    return await this.adminService.buildBanAdminResponse(admin);
   }
 }
