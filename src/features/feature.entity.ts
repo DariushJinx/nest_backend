@@ -12,7 +12,7 @@ export class FeatureEntity {
   @Column()
   description: string;
 
-  @ManyToOne(() => ProductEntity, (course) => course.features, {
+  @ManyToOne(() => ProductEntity, (product) => product.features, {
     eager: true,
   })
   product_id: ProductEntity;
