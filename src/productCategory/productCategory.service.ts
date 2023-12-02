@@ -23,16 +23,15 @@ export class ProductCategoryService {
     admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<ProductCategoryEntity> {
-    if (!admin) {
-      throw new HttpException(
-        'شما مجاز به فعالیت در این بخش نیستید',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
     const errorResponse = {
       errors: {},
     };
 
+    if (!admin) {
+      errorResponse.errors['admin'] = 'شما مجاز به فعالیت در این بخش نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
     const category = new ProductCategoryEntity();
 
     const images = FunctionUtils.ListOfImagesForRequest(
@@ -126,10 +125,19 @@ export class ProductCategoryService {
     const productCategories = await queryBuilder.getMany();
 
     if (!productCategories.length) {
-      throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'دسته بندی ای برای محصولات یافت نشد',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     productCategories.forEach((category) => {
+      delete category.register.id;
+      delete category.register.first_name;
+      delete category.register.last_name;
+      delete category.register.mobile;
+      delete category.register.isBan;
+      delete category.register.email;
       delete category.register.password;
     });
     return { productCategories, productCategoriesCount };
@@ -147,6 +155,12 @@ export class ProductCategoryService {
       );
     }
 
+    delete category.register.id;
+    delete category.register.first_name;
+    delete category.register.last_name;
+    delete category.register.mobile;
+    delete category.register.isBan;
+    delete category.register.email;
     delete category.register.password;
 
     return category;
