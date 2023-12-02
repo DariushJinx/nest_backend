@@ -1,16 +1,36 @@
-import { Module } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FeatureEntity } from './feature.entity';
 import { FeatureController } from './feature.controller';
-import { UserEntity } from 'src/user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { FeatureService } from './feature.service';
-import { ProductEntity } from 'src/product/product.entity';
+import { ProductEntity } from '../product/product.entity';
+import { AdminEntity } from '../admin/admin.entity';
+import { AdminService } from '../admin/admin.service';
+import { AdminAuthMiddleware } from 'src/admin/middlewares/auth.admin.middleware';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FeatureEntity, UserEntity, ProductEntity]),
+    TypeOrmModule.forFeature([
+      FeatureEntity,
+      UserEntity,
+      ProductEntity,
+      AdminEntity,
+    ]),
   ],
   controllers: [FeatureController],
-  providers: [FeatureService],
+  providers: [FeatureService, AdminService],
 })
-export class FeatureModule {}
+export class FeatureModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AdminAuthMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    });
+  }
+}
