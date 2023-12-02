@@ -23,16 +23,15 @@ export class BlogCategoryService {
     admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<BlogCategoryEntity> {
-    if (!admin) {
-      throw new HttpException(
-        'شما مجاز به فعالیت در این بخش نیستید',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
     const errorResponse = {
       errors: {},
     };
+
+    if (!admin) {
+      errorResponse.errors['category'] = 'شما مجاز به فعالیت در این بخش نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
 
     const category = new BlogCategoryEntity();
 
@@ -131,6 +130,12 @@ export class BlogCategoryService {
     }
 
     blogCategories.forEach((category) => {
+      delete category.register.id;
+      delete category.register.first_name;
+      delete category.register.last_name;
+      delete category.register.mobile;
+      delete category.register.isBan;
+      delete category.register.email;
       delete category.register.password;
     });
     return { blogCategories, blogCategoriesCount };
@@ -148,6 +153,12 @@ export class BlogCategoryService {
       );
     }
 
+    delete category.register.id;
+    delete category.register.first_name;
+    delete category.register.last_name;
+    delete category.register.mobile;
+    delete category.register.isBan;
+    delete category.register.email;
     delete category.register.password;
 
     return category;
