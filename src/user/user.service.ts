@@ -8,6 +8,8 @@ import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { ACCESS_TOKEN_SECRET_KEY } from 'src/config';
 import { UserResponseInterface } from './types/userResponse.interface';
+import { AdminEntity } from 'src/admin/admin.entity';
+import { UserBanResponseInterface } from './types/userBanResponse.interface';
 
 @Injectable()
 export class UserService {
@@ -125,18 +127,18 @@ export class UserService {
     return user;
   }
 
-  async banUser(currentUser: UserEntity, id: number) {
+  async banUser(admin: AdminEntity, id: number) {
     const user = await this.userRepository.findOne({
       where: { id: id },
     });
 
     if (!user) {
-      throw new HttpException('user does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('کاربر مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
 
-    if (currentUser.role !== 'ADMIN') {
+    if (!admin) {
       throw new HttpException(
-        'شما مجاز به بن کردن کابر نمی باشید',
+        'شما مجاز به بن کردن کاربر نمی باشید',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -144,6 +146,7 @@ export class UserService {
     user.isBan = '1';
 
     await this.userRepository.save(user);
+    delete user.password;
 
     return user;
   }
@@ -173,6 +176,16 @@ export class UserService {
       ACCESS_TOKEN_SECRET_KEY,
       options,
     );
+  }
+
+  async buildBanAdminResponse(
+    user: UserEntity,
+  ): Promise<UserBanResponseInterface> {
+    return {
+      user: {
+        ...user,
+      },
+    };
   }
 
   async buildUserResponse(user: UserEntity): Promise<UserResponseInterface> {
