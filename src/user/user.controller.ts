@@ -1,3 +1,4 @@
+import { Admin } from './../decorators/admin.decorators';
 import {
   Body,
   Controller,
@@ -10,12 +11,11 @@ import {
 import { UserService } from './user.service';
 import { RegisterDto } from './dto/register.dto';
 import { UserType } from './types/user.types';
-import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
+import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { LoginDto } from './dto/login.dto';
 import { UserResponseInterface } from './types/userResponse.interface';
-import { AuthGuard } from './guard/auth.guard';
-import { User } from 'src/decorators/user.decorators';
-import { UserEntity } from './user.entity';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Controller('')
 export class UserController {
@@ -36,12 +36,9 @@ export class UserController {
   }
 
   @Put('user/ban/:id')
-  @UseGuards(AuthGuard)
-  async followProfile(
-    @User() currentUser: UserEntity,
-    @Param('id') id: number,
-  ) {
-    const user = await this.userService.banUser(currentUser, id);
-    return await this.userService.buildUserResponse(user);
+  @UseGuards(AdminAuthGuard)
+  async followProfile(@Admin() admin: AdminEntity, @Param('id') id: number) {
+    const user = await this.userService.banUser(admin, id);
+    return await this.userService.buildBanAdminResponse(user);
   }
 }
