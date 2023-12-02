@@ -23,16 +23,15 @@ export class CourseCategoryService {
     admin: AdminEntity,
     files: Express.Multer.File[],
   ): Promise<CourseCategoryEntity> {
-    if (!admin) {
-      throw new HttpException(
-        'شما مجاز به فعالیت در این بخش نیستید',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
     const errorResponse = {
       errors: {},
     };
+
+    if (!admin) {
+      errorResponse.errors['category'] = 'شما مجاز به فعالیت در این بخش نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
+      throw new HttpException(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
 
     const category = new CourseCategoryEntity();
 
@@ -131,6 +130,12 @@ export class CourseCategoryService {
     }
 
     courseCategories.forEach((category) => {
+      delete category.register.id;
+      delete category.register.first_name;
+      delete category.register.last_name;
+      delete category.register.mobile;
+      delete category.register.isBan;
+      delete category.register.email;
       delete category.register.password;
     });
     return { courseCategories, courseCategoriesCount };
@@ -148,6 +153,12 @@ export class CourseCategoryService {
       );
     }
 
+    delete category.register.id;
+    delete category.register.first_name;
+    delete category.register.last_name;
+    delete category.register.mobile;
+    delete category.register.isBan;
+    delete category.register.email;
     delete category.register.password;
 
     return category;
@@ -281,6 +292,12 @@ export class CourseCategoryService {
 
     category.images = images;
 
+    delete category.register.id;
+    delete category.register.first_name;
+    delete category.register.last_name;
+    delete category.register.mobile;
+    delete category.register.isBan;
+    delete category.register.email;
     delete category.register.password;
 
     return await this.categoryRepository.save(category);
