@@ -58,7 +58,7 @@ export class ProductEntity {
   @Column({ default: 5 })
   productAverageScore: number;
 
-  @OneToMany(() => FeatureEntity, (chapter) => chapter.product_id)
+  @OneToMany(() => FeatureEntity, (feature) => feature.product_id)
   features: FeatureEntity[];
 
   @OneToMany(() => CommentEntity, (comment) => comment.product_id)
