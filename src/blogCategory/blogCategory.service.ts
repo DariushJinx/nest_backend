@@ -290,6 +290,12 @@ export class BlogCategoryService {
 
     Object.assign(category, updateCategoryDto);
 
+    delete category.register.id;
+    delete category.register.first_name;
+    delete category.register.last_name;
+    delete category.register.mobile;
+    delete category.register.isBan;
+    delete category.register.email;
     delete category.register.password;
 
     category.images = images;
