@@ -10,36 +10,35 @@ import {
   Put,
 } from '@nestjs/common';
 import { FeatureService } from './feature.service';
-import { AuthGuard } from '../user/guard/auth.guard';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
-import { User } from '../decorators/user.decorators';
-import { UserEntity } from '../user/user.entity';
 import { CreateFeatureDto } from './dto/createFeature.dto';
 import { FeatureResponseInterface } from './types/featureResponse.interface';
 import { DeleteResult } from 'typeorm';
 import { FeaturesResponseInterface } from './types/featuresResponse.interface';
 import { UpdateFeatureDto } from './dto/updateFeature.dto';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { Admin } from '../decorators/admin.decorators';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Controller('feature')
 export class FeatureController {
   constructor(private readonly featureService: FeatureService) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async createFeature(
-    @User() currentUser: UserEntity,
+    @Admin() admin: AdminEntity,
     @Body() createFeatureDto: CreateFeatureDto,
   ) {
     const feature = await this.featureService.createFeature(
-      currentUser,
+      admin,
       createFeatureDto,
     );
     return await this.featureService.buildFeatureResponse(feature);
   }
 
   @Get('list')
-  @UseGuards(AuthGuard)
   async findAllFeatures(): Promise<FeaturesResponseInterface> {
     return await this.featureService.findAllFeatures();
   }
@@ -52,29 +51,27 @@ export class FeatureController {
     return await this.featureService.buildFeatureResponse(feature);
   }
 
-  @Get('/features/:ids')
-  async getFeaturesByIds(@Param('ids') ids: string) {
-    const featureIds = ids.split(',').map((id) => parseInt(id, 10));
-    const features = await this.featureService.getFeaturesByIds(featureIds);
-    return { message: 'Features retrieved', features };
-  }
-
   @Delete(':id')
-  @UseGuards(AuthGuard)
-  async deleteOneFeature(@Param('id') id: number): Promise<DeleteResult> {
-    return await this.featureService.deleteOneFeatureWithId(id);
+  @UseGuards(AdminAuthGuard)
+  async deleteOneFeature(
+    @Param('id') id: number,
+    @Admin() admin: AdminEntity,
+  ): Promise<DeleteResult> {
+    return await this.featureService.deleteOneFeatureWithId(id, admin);
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
-  async updateOneBlogWithId(
+  async updateOneFeatureWithId(
     @Param('id') id: number,
     @Body('') updateFeatureDto: UpdateFeatureDto,
+    @Admin() admin: AdminEntity,
   ): Promise<FeatureResponseInterface> {
     const feature = await this.featureService.updateFeature(
       id,
       updateFeatureDto,
+      admin,
     );
     return await this.featureService.buildFeatureResponse(feature);
   }
