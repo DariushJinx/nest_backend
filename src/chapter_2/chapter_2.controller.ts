@@ -10,41 +10,39 @@ import {
   Delete,
   Put,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/user/guard/auth.guard';
 import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
-import { User } from 'src/decorators/user.decorators';
-import { UserEntity } from 'src/user/user.entity';
-import { DeleteResult } from 'typeorm';
 import { ChapterService_2 } from './chpater_2.service';
 import { CreateChapterDto_2 } from './dto/createChpater_2.dto';
 import { ChaptersResponseInterface_2 } from './types/chaptersResponse_2.interface';
 import { ChapterResponseInterface_2 } from './types/chpaterResponse_2.interface';
 import { UpdateChapterDto_2 } from './dto/updateChapter_2.dto';
+import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
+import { Admin } from '../decorators/admin.decorators';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Controller('chapter_2')
 export class ChapterController_2 {
   constructor(private readonly chapterService: ChapterService_2) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async createChapter(
-    @User() user: UserEntity,
+    @Admin() admin: AdminEntity,
     @Body() createChapterDto: CreateChapterDto_2,
   ) {
     const chapter = await this.chapterService.createChapter(
       createChapterDto,
-      user,
+      admin,
     );
     return await this.chapterService.buildChapterResponse(chapter);
   }
 
   @Get('list')
   async findAllChapters(
-    @User() currentUser: number,
     @Query() query: any,
   ): Promise<ChaptersResponseInterface_2> {
-    return await this.chapterService.findAllChapters(currentUser, query);
+    return await this.chapterService.findAllChapters(query);
   }
 
   @Get(':id')
@@ -56,25 +54,31 @@ export class ChapterController_2 {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   async deleteOneChapter(
     @Param('id') id: number,
-    @User() user: UserEntity,
-  ): Promise<DeleteResult> {
-    return await this.chapterService.deleteOneChapterWithID(id, user);
+    @Admin() admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    await this.chapterService.deleteOneChapterWithID(id, admin);
+
+    return {
+      message: 'دوره مورد نظر با موفقیت حذف شد',
+    };
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async updateOneChapterWithId(
     @Param('id') id: number,
-    @User('id') currentUserID: number,
+    @Admin('id') AdminID: number,
     @Body('') updateChapterDto: UpdateChapterDto_2,
   ): Promise<ChapterResponseInterface_2> {
     const chapter = await this.chapterService.updateChapter(
       id,
-      currentUserID,
+      AdminID,
       updateChapterDto,
     );
     return await this.chapterService.buildChapterResponse(chapter);
