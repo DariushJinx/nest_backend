@@ -12,35 +12,34 @@ import {
   Delete,
   Put,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/user/guard/auth.guard';
 import { BackendValidationPipe } from 'src/shared/pipes/backendValidation.pipe';
-import { User } from 'src/decorators/user.decorators';
-import { UserEntity } from 'src/user/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'src/middlewares/multer';
-import { DeleteResult } from 'typeorm';
 import { EpisodeService_2 } from './episode_2.service';
 import { CreateEpisodeDto_2 } from './dto/createEpisode_2.dto';
 import { EpisodesResponseInterface_2 } from './types/episodesResponse_2.interface';
 import { EpisodeResponseInterface_2 } from './types/episodeResponse_2.interface';
 import { UpdateEpisodeDto_2 } from './dto/updateEpisode_2.dto';
+import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
+import { Admin } from 'src/decorators/admin.decorators';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Controller('episode_2')
 export class EpisodeController_2 {
   constructor(private readonly episodeService: EpisodeService_2) {}
 
   @Post('add')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FileInterceptor('video', multerConfig))
   async createEpisode(
-    @User() user: UserEntity,
+    @Admin() admin: AdminEntity,
     @UploadedFile() file: Express.Multer.File,
     @Body() createEpisodeDto: CreateEpisodeDto_2,
   ) {
     const episode = await this.episodeService.createEpisode(
       createEpisodeDto,
-      user,
+      admin,
       file,
     );
     return await this.episodeService.buildEpisodeResponse(episode);
@@ -48,10 +47,9 @@ export class EpisodeController_2 {
 
   @Get('list')
   async findAllEpisodes(
-    @User() currentUser: number,
     @Query() query: any,
   ): Promise<EpisodesResponseInterface_2> {
-    return await this.episodeService.findAllEpisodes(currentUser, query);
+    return await this.episodeService.findAllEpisodes(query);
   }
 
   @Get(':id')
@@ -63,27 +61,33 @@ export class EpisodeController_2 {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   async deleteOneEpisode(
     @Param('id') id: number,
-    @User() user: UserEntity,
-  ): Promise<DeleteResult> {
-    return await this.episodeService.deleteOneEpisodeWithID(id, user);
+    @Admin() admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    await this.episodeService.deleteOneEpisodeWithID(id, admin);
+
+    return {
+      message: 'قسمت مورد نظر با موفقیت حذف شد',
+    };
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   @UseInterceptors(FileInterceptor('video', multerConfig))
   async updateOneEpisodeWithId(
     @Param('id') id: number,
-    @User('id') currentUserID: number,
+    @Admin('id') adminID: number,
     @UploadedFile() file: Express.Multer.File,
     @Body('') updateEpisodeDto: UpdateEpisodeDto_2,
   ): Promise<EpisodeResponseInterface_2> {
     const episode = await this.episodeService.updateEpisode(
       id,
-      currentUserID,
+      adminID,
       file,
       updateEpisodeDto,
     );
