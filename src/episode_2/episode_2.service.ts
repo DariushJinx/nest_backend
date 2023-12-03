@@ -1,9 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
-import { UserEntity } from '../user/user.entity';
+import { Repository } from 'typeorm';
 import { join } from 'path';
-import { FunctionUtils } from 'src/utils/functions.utils';
+import { FunctionUtils } from '../utils/functions.utils';
 import getVideoDurationInSeconds from 'get-video-duration';
 import { EpisodeEntity_2 } from './episode_2.entity';
 import { ChapterEntity_2 } from '../chapter_2/chapter_2.entity';
@@ -11,26 +10,29 @@ import { EpisodesResponseInterface_2 } from './types/episodesResponse_2.interfac
 import { UpdateEpisodeDto_2 } from './dto/updateEpisode_2.dto';
 import { EpisodeResponseInterface_2 } from './types/episodeResponse_2.interface';
 import { CreateEpisodeDto_2 } from './dto/createEpisode_2.dto';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Injectable()
 export class EpisodeService_2 {
   constructor(
     @InjectRepository(EpisodeEntity_2)
     private readonly episodeRepository: Repository<EpisodeEntity_2>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ChapterEntity_2)
     private readonly chapterRepository: Repository<ChapterEntity_2>,
   ) {}
 
   async createEpisode(
     createEpisodeDto: CreateEpisodeDto_2,
-    user: UserEntity,
+    admin: AdminEntity,
     file: Express.Multer.File,
   ) {
     const chapter = await this.chapterRepository.findOne({
       where: { id: +createEpisodeDto.chapter_id },
     });
+
+    if (!chapter) {
+      throw new HttpException('فصل مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
     const episode = new EpisodeEntity_2();
     const fileAddress = join(createEpisodeDto.fileUploadPath, file.filename);
     const videoURL = `http://localhost:3333/${fileAddress}`;
@@ -41,7 +43,7 @@ export class EpisodeService_2 {
     Object.assign(episode, createEpisodeDto);
     episode.time = time;
     episode.videoAddress = videoURL;
-    episode.user_id = user.id;
+    episode.user_id = admin.id;
     if (chapter.course_id.teacher.id !== episode.user_id) {
       throw new HttpException(
         'شما مجاز به ثبت قسمت برای این فصل نیستید',
@@ -51,10 +53,7 @@ export class EpisodeService_2 {
     return await this.episodeRepository.save(episode);
   }
 
-  async findAllEpisodes(
-    currentUser: number,
-    query: any,
-  ): Promise<EpisodesResponseInterface_2> {
+  async findAllEpisodes(query: any): Promise<EpisodesResponseInterface_2> {
     const queryBuilder = this.episodeRepository.createQueryBuilder('episode');
 
     if (query.limit) {
@@ -77,31 +76,38 @@ export class EpisodeService_2 {
       where: { id: id },
     });
 
-    delete episode.chapter_id.course_id.teacher.password;
+    if (!episode) {
+      throw new HttpException('قسمت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
+    delete episode.chapter_id.course_id;
 
     return episode;
   }
 
   async deleteOneEpisodeWithID(
     id: number,
-    user: UserEntity,
-  ): Promise<DeleteResult> {
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
     const chapter = await this.currentEpisode(id);
-    const userResult = await this.userRepository.findOne({
-      where: { id: chapter.user_id },
-    });
 
     if (!chapter) {
       throw new HttpException('قسمت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (userResult.role !== user.role) {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف قسمت نیستید',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    return await this.episodeRepository.delete({ id });
+    await this.episodeRepository.delete({ id });
+
+    return {
+      message: 'قسمت مورد نظر با موفقیت حذف شد',
+    };
   }
 
   async updateEpisode(
@@ -113,10 +119,10 @@ export class EpisodeService_2 {
     const episode = await this.currentEpisode(id);
 
     const fileAddress = join(updateEpisodeDto.fileUploadPath, file.filename);
-    const videoURL = `/${fileAddress}`;
+    const videoURL = `http://localhost:3333/${fileAddress}`;
 
     if (!episode) {
-      throw new HttpException('episode does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('قسمت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
 
     if (episode.user_id !== currentUserID) {
