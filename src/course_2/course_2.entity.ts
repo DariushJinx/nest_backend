@@ -11,6 +11,18 @@ import { CommentEntity } from '../comment/comment.entity';
 import { CourseCategoryEntity } from '../courseCategory/courseCategory.entity';
 import { AdminEntity } from '../admin/admin.entity';
 
+export enum typeEnum {
+  FREE = 'free',
+  CASH = 'cash',
+  SPECIAL = 'special',
+}
+
+export enum statusEnum {
+  NOT_STARTED = 'not_started',
+  COMPLETED = 'completed',
+  HOLDING = 'holding',
+}
+
 @Entity({ name: 'course_2' })
 export class CourseEntity_2 {
   @PrimaryGeneratedColumn()
@@ -49,17 +61,14 @@ export class CourseEntity_2 {
   @Column({ default: 0 })
   discount: number;
 
-  @Column({ default: 'free', enum: ['free', 'cash', 'special'] })
-  type: string;
+  @Column({ default: typeEnum.FREE, type: 'enum', enum: typeEnum })
+  type: typeEnum;
 
   @Column({ default: 5 })
   courseAverageScore: number;
 
-  @Column({
-    default: 'not_started',
-    enum: ['not_started', 'completed', 'holding'],
-  })
-  status: string;
+  @Column({ default: statusEnum.NOT_STARTED, type: 'enum', enum: statusEnum })
+  status: statusEnum;
 
   @ManyToOne(() => CourseCategoryEntity, (category) => category.courses, {
     eager: true,
