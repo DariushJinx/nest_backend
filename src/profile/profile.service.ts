@@ -28,13 +28,13 @@ export class ProfileService {
       ],
     });
 
-    user.favoritesProducts.map((product) => delete product.supplier.password);
-    user.favorites.map((blog) => delete blog.author.password);
-    user.favoriteCourses_2.map((course) => delete course.teacher.password);
-
     if (!user) {
       throw new HttpException('پروفایلی یافت نشد ...', HttpStatus.NOT_FOUND);
     }
+
+    user.favoritesProducts.map((product) => delete product.supplier.password);
+    user.favorites.map((blog) => delete blog.author.password);
+    user.favoriteCourses_2.map((course) => delete course.teacher.password);
 
     const follow = await this.followRepository.findOne({
       where: {
@@ -52,12 +52,12 @@ export class ProfileService {
     });
 
     if (!user) {
-      throw new HttpException('Profile does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('پروفایلی یافت نشد', HttpStatus.NOT_FOUND);
     }
 
     if (currentUser.id === user.id) {
       throw new HttpException(
-        'follower and following cant be equal',
+        'دنبال کننده و دنبال شونده نمی توانند یکی باشند',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -84,12 +84,12 @@ export class ProfileService {
     });
 
     if (!user) {
-      throw new HttpException('Profile does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('پروفایلی یافت نشد', HttpStatus.NOT_FOUND);
     }
 
     if (currentUserId === user.id) {
       throw new HttpException(
-        'follower and following cant be equal',
+        'دنبال کننده و دنبال شونده نمی توانند یکی باشند',
         HttpStatus.BAD_REQUEST,
       );
     }
