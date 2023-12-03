@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { FeatureEntity } from './feature.entity';
 import { ProductEntity } from '../product/product.entity';
@@ -54,9 +54,17 @@ export class FeatureService {
   }
 
   async getOneFeatureWithID(id: number): Promise<FeatureEntity> {
-    return await this.featureRepository.findOne({
+    const feature = await this.featureRepository.findOne({
       where: { id: id },
     });
+
+    if (!feature) {
+      throw new HttpException('ویژگی مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
+    delete feature.product_id;
+
+    return feature;
   }
 
   async buildFeatureResponse(
@@ -68,7 +76,7 @@ export class FeatureService {
   async deleteOneFeatureWithId(
     id: number,
     admin: AdminEntity,
-  ): Promise<DeleteResult> {
+  ): Promise<{ message: string }> {
     if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف ویژگی محصولات نیستید',
@@ -80,7 +88,11 @@ export class FeatureService {
     if (!feature) {
       throw new HttpException('ویژگی مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    return await this.featureRepository.delete({ id });
+    await this.featureRepository.delete({ id });
+
+    return {
+      message: 'ویژگی محصول مورد نظر با موفقیت حذف گردید',
+    };
   }
 
   async findAllFeatures(): Promise<FeaturesResponseInterface> {
