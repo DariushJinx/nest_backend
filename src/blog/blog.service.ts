@@ -144,6 +144,12 @@ export class BlogService {
     }
 
     blogs.forEach((blog) => {
+      delete blog.author.id;
+      delete blog.author.first_name;
+      delete blog.author.last_name;
+      delete blog.author.mobile;
+      delete blog.author.isBan;
+      delete blog.author.email;
       delete blog.author.password;
     });
 
@@ -188,9 +194,19 @@ export class BlogService {
       });
 
       blogs.forEach((blog) => {
-        delete blog.author.password;
-        delete blog.category.register;
         delete blog.category.images;
+        delete blog.category.register;
+        delete blog.category.parent;
+        delete blog.category.isLast;
+        delete blog.category.tree_cat;
+        delete blog.category.createdAt;
+        delete blog.category.updatedAt;
+        delete blog.author.first_name;
+        delete blog.author.last_name;
+        delete blog.author.mobile;
+        delete blog.author.isBan;
+        delete blog.author.email;
+        delete blog.author.password;
       });
 
       await this.blogRepository.save(allBlogs);
@@ -212,6 +228,17 @@ export class BlogService {
     delete blog.category.id;
     delete blog.category.images;
     delete blog.category.register;
+    delete blog.category.parent;
+    delete blog.category.isLast;
+    delete blog.category.tree_cat;
+    delete blog.category.createdAt;
+    delete blog.category.updatedAt;
+    delete blog.author.id;
+    delete blog.author.first_name;
+    delete blog.author.last_name;
+    delete blog.author.mobile;
+    delete blog.author.isBan;
+    delete blog.author.email;
     delete blog.author.password;
 
     return blog;
@@ -226,6 +253,20 @@ export class BlogService {
       throw new HttpException('مقاله ای یافت نشد', HttpStatus.NOT_FOUND);
     }
 
+    delete blog.category.id;
+    delete blog.category.images;
+    delete blog.category.register;
+    delete blog.category.parent;
+    delete blog.category.isLast;
+    delete blog.category.tree_cat;
+    delete blog.category.createdAt;
+    delete blog.category.updatedAt;
+    delete blog.author.id;
+    delete blog.author.first_name;
+    delete blog.author.last_name;
+    delete blog.author.mobile;
+    delete blog.author.isBan;
+    delete blog.author.email;
     delete blog.author.password;
 
     return blog;
@@ -268,11 +309,13 @@ export class BlogService {
 
     if (!blog) {
       errorResponse.errors['blog'] = 'مقاله مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
       throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     if (!admin) {
       errorResponse.errors['admin'] = 'شما مجاز به به روز رسانی مقاله نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.FORBIDDEN;
       throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
     }
 
@@ -283,9 +326,21 @@ export class BlogService {
 
     Object.assign(blog, updateBlogDto);
 
-    delete blog.author.password;
-    delete blog.category.register;
+    delete blog.category.id;
     delete blog.category.images;
+    delete blog.category.register;
+    delete blog.category.parent;
+    delete blog.category.isLast;
+    delete blog.category.tree_cat;
+    delete blog.category.createdAt;
+    delete blog.category.updatedAt;
+    delete blog.author.id;
+    delete blog.author.first_name;
+    delete blog.author.last_name;
+    delete blog.author.mobile;
+    delete blog.author.isBan;
+    delete blog.author.email;
+    delete blog.author.password;
 
     blog.images = images;
 
@@ -308,9 +363,21 @@ export class BlogService {
         (blogInFavorite) => blogInFavorite.id === blog.id,
       ) === -1;
 
-    delete blog.author.password;
-    delete blog.category.register;
+    delete blog.category.id;
     delete blog.category.images;
+    delete blog.category.register;
+    delete blog.category.parent;
+    delete blog.category.isLast;
+    delete blog.category.tree_cat;
+    delete blog.category.createdAt;
+    delete blog.category.updatedAt;
+    delete blog.author.id;
+    delete blog.author.first_name;
+    delete blog.author.last_name;
+    delete blog.author.mobile;
+    delete blog.author.isBan;
+    delete blog.author.email;
+    delete blog.author.password;
 
     if (isNotFavorite) {
       user.favorites.push(blog);
@@ -347,9 +414,21 @@ export class BlogService {
       await this.blogRepository.save(blog);
     }
 
-    delete blog.author.password;
-    delete blog.category.register;
+    delete blog.category.id;
     delete blog.category.images;
+    delete blog.category.register;
+    delete blog.category.parent;
+    delete blog.category.isLast;
+    delete blog.category.tree_cat;
+    delete blog.category.createdAt;
+    delete blog.category.updatedAt;
+    delete blog.author.id;
+    delete blog.author.first_name;
+    delete blog.author.last_name;
+    delete blog.author.mobile;
+    delete blog.author.isBan;
+    delete blog.author.email;
+    delete blog.author.password;
 
     return blog;
   }
