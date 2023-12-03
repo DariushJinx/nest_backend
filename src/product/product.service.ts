@@ -132,6 +132,16 @@ export class ProductService {
     const productsCount = await queryBuilder.getCount();
     const products = await queryBuilder.getMany();
 
+    products.forEach((product) => {
+      delete product.supplier.id;
+      delete product.supplier.first_name;
+      delete product.supplier.last_name;
+      delete product.supplier.mobile;
+      delete product.supplier.isBan;
+      delete product.supplier.email;
+      delete product.supplier.password;
+    });
+
     if (!products.length) {
       throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
     }
@@ -175,10 +185,20 @@ export class ProductService {
         productAverageScore: average,
       });
 
-      products.forEach((course) => {
-        delete course.supplier.password;
-        delete course.category.register;
-        delete course.category.images;
+      products.forEach((product) => {
+        delete product.category.images;
+        delete product.category.register;
+        delete product.category.parent;
+        delete product.category.isLast;
+        delete product.category.tree_cat;
+        delete product.category.createdAt;
+        delete product.category.updatedAt;
+        delete product.supplier.first_name;
+        delete product.supplier.last_name;
+        delete product.supplier.mobile;
+        delete product.supplier.isBan;
+        delete product.supplier.email;
+        delete product.supplier.password;
       });
 
       await this.productRepository.save(allProducts);
@@ -208,6 +228,20 @@ export class ProductService {
     if (!product) {
       throw new HttpException('هیچ محصولی یافت نشد', HttpStatus.BAD_REQUEST);
     }
+
+    delete product.category.images;
+    delete product.category.register;
+    delete product.category.parent;
+    delete product.category.isLast;
+    delete product.category.tree_cat;
+    delete product.category.createdAt;
+    delete product.category.updatedAt;
+    delete product.supplier.first_name;
+    delete product.supplier.last_name;
+    delete product.supplier.mobile;
+    delete product.supplier.isBan;
+    delete product.supplier.email;
+    delete product.supplier.password;
 
     return product;
   }
@@ -319,7 +353,24 @@ export class ProductService {
       relations: ['features', 'comments'],
     });
 
+    delete product.category.images;
+    delete product.category.register;
+    delete product.category.parent;
+    delete product.category.isLast;
+    delete product.category.tree_cat;
+    delete product.category.createdAt;
+    delete product.category.updatedAt;
+    delete product.supplier.first_name;
+    delete product.supplier.last_name;
+    delete product.supplier.mobile;
+    delete product.supplier.isBan;
+    delete product.supplier.email;
     delete product.supplier.password;
+    product.features.forEach((feature) => {
+      delete feature.product_id;
+      delete feature.createdAt;
+      delete feature.updatedAt;
+    });
     return product;
   }
 
