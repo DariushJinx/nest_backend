@@ -13,7 +13,6 @@ import { FeatureService } from './feature.service';
 import { BackendValidationPipe } from '../shared/pipes/backendValidation.pipe';
 import { CreateFeatureDto } from './dto/createFeature.dto';
 import { FeatureResponseInterface } from './types/featureResponse.interface';
-import { DeleteResult } from 'typeorm';
 import { FeaturesResponseInterface } from './types/featuresResponse.interface';
 import { UpdateFeatureDto } from './dto/updateFeature.dto';
 import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
@@ -56,8 +55,12 @@ export class FeatureController {
   async deleteOneFeature(
     @Param('id') id: number,
     @Admin() admin: AdminEntity,
-  ): Promise<DeleteResult> {
-    return await this.featureService.deleteOneFeatureWithId(id, admin);
+  ): Promise<{ message: string }> {
+    await this.featureService.deleteOneFeatureWithId(id, admin);
+
+    return {
+      message: 'ویژگی محصول مورد نظر با موفقیت حذف گردید',
+    };
   }
 
   @Put(':id')
