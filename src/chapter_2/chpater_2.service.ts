@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { CreateChapterDto_2 } from './dto/createChpater_2.dto';
 import { ChapterEntity_2 } from './chapter_2.entity';
@@ -8,6 +8,7 @@ import { ChaptersResponseInterface_2 } from './types/chaptersResponse_2.interfac
 import { UpdateChapterDto_2 } from './dto/updateChapter_2.dto';
 import { ChapterResponseInterface_2 } from './types/chpaterResponse_2.interface';
 import { CourseEntity_2 } from '../course_2/course_2.entity';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Injectable()
 export class ChapterService_2 {
@@ -22,15 +23,20 @@ export class ChapterService_2 {
 
   async createChapter(
     createChapterDto: CreateChapterDto_2,
-    user: UserEntity,
+    admin: AdminEntity,
   ): Promise<ChapterEntity_2> {
     const course = await this.courseRepository.findOne({
       where: { id: +createChapterDto.course_id },
     });
+
+    if (!course) {
+      throw new HttpException('دوره مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
     const chapter = new ChapterEntity_2();
     Object.assign(chapter, createChapterDto);
 
-    chapter.user_id = user.id;
+    chapter.user_id = admin.id;
     if (course.teacher.id !== chapter.user_id) {
       throw new HttpException(
         'شما مجاز به ثبت فصل برای این دوره نیستید',
@@ -40,10 +46,7 @@ export class ChapterService_2 {
     return await this.chapterRepository.save(chapter);
   }
 
-  async findAllChapters(
-    currentUser: number,
-    query: any,
-  ): Promise<ChaptersResponseInterface_2> {
+  async findAllChapters(query: any): Promise<ChaptersResponseInterface_2> {
     const queryBuilder = this.chapterRepository.createQueryBuilder('chapter');
 
     if (query.limit) {
@@ -67,6 +70,10 @@ export class ChapterService_2 {
       relations: ['episodes'],
     });
 
+    if (!chapter) {
+      throw new HttpException('فصل مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
     delete chapter.course_id;
     chapter.episodes.map((episode) => delete episode.chapter_id);
 
@@ -75,38 +82,41 @@ export class ChapterService_2 {
 
   async deleteOneChapterWithID(
     id: number,
-    user: UserEntity,
-  ): Promise<DeleteResult> {
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
     const chapter = await this.currentChapter(id);
-    const userResult = await this.userRepository.findOne({
-      where: { id: chapter.user_id },
-    });
 
     if (!chapter) {
       throw new HttpException('فصل مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (userResult.role !== user.role) {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف فصل نیستید',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    return await this.chapterRepository.delete({ id });
+    await this.chapterRepository.delete({ id });
+
+    return {
+      message: 'فصل مورد نظر با موفقیت حذف شد',
+    };
   }
 
   async updateChapter(
     id: number,
-    currentUserID: number,
+    adminID: number,
     updateChapterDto: UpdateChapterDto_2,
   ) {
     const chapter = await this.currentChapter(id);
 
     if (!chapter) {
-      throw new HttpException('chapter does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('فصل مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
 
-    if (chapter.user_id !== currentUserID) {
+    if (chapter.user_id !== adminID) {
       throw new HttpException(
         'شما مجاز به تغییر فصل نیستید',
         HttpStatus.FORBIDDEN,
