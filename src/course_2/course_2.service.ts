@@ -37,6 +37,15 @@ export class CourseService_2 {
       errors: {},
     };
 
+    if (
+      createCourseDto.type !== 'free' &&
+      createCourseDto.type !== 'cash' &&
+      createCourseDto.type !== 'special'
+    ) {
+      errorResponse.errors['error'] = 'نوع وارد شده برای دوره مناسب نمی باشد';
+      errorResponse.errors['statusCode'] = HttpStatus.BAD_REQUEST;
+      throw new HttpException(errorResponse, HttpStatus.BAD_REQUEST);
+    }
     if (!admin) {
       errorResponse.errors['error'] = 'شما مجاز به ثبت دوره نیستید';
       errorResponse.errors['statusCode'] = HttpStatus.UNAUTHORIZED;
@@ -150,7 +159,15 @@ export class CourseService_2 {
       throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
     }
 
-    courses.map((course) => delete course.teacher.password);
+    courses.forEach((course) => {
+      delete course.teacher.id;
+      delete course.teacher.first_name;
+      delete course.teacher.last_name;
+      delete course.teacher.mobile;
+      delete course.teacher.isBan;
+      delete course.teacher.email;
+      delete course.teacher.password;
+    });
     return { courses, coursesCount };
   }
 
@@ -196,6 +213,22 @@ export class CourseService_2 {
         delete course.category.images;
       });
 
+      courses.forEach((course) => {
+        delete course.category.images;
+        delete course.category.register;
+        delete course.category.parent;
+        delete course.category.isLast;
+        delete course.category.tree_cat;
+        delete course.category.createdAt;
+        delete course.category.updatedAt;
+        delete course.teacher.first_name;
+        delete course.teacher.last_name;
+        delete course.teacher.mobile;
+        delete course.teacher.isBan;
+        delete course.teacher.email;
+        delete course.teacher.password;
+      });
+
       await this.courseRepository.save(allCourses);
     });
 
@@ -212,9 +245,24 @@ export class CourseService_2 {
       throw new HttpException('هیچ دوره ای یافت نشد', HttpStatus.BAD_REQUEST);
     }
 
+    delete course.category.images;
+    delete course.category.register;
+    delete course.category.parent;
+    delete course.category.isLast;
+    delete course.category.tree_cat;
+    delete course.category.createdAt;
+    delete course.category.updatedAt;
+    delete course.teacher.first_name;
+    delete course.teacher.last_name;
+    delete course.teacher.mobile;
+    delete course.teacher.isBan;
+    delete course.teacher.email;
     delete course.teacher.password;
-    delete course.category.register.password;
-    course.chapters.map((chapter) => delete chapter.course_id);
+    course.chapters.map((chapter) => {
+      delete chapter.course_id;
+      delete chapter.createdAt;
+      delete chapter.updatedAt;
+    });
     course.chapters.map((chapter) =>
       chapter.episodes.map((episode) => {
         delete episode.chapter_id;
