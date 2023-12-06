@@ -2,12 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContactEntity } from './contact.entity';
 import { DeleteResult, Repository } from 'typeorm';
-import { UserEntity } from 'src/user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { CreateContactDto } from './dto/createContact.dto';
 import { ContactResponseInterface } from './types/contactResponse.interface';
 import { ContactsResponseInterface } from './types/contactsResponse.interface';
 import { CreateAnswerDto } from './dto/createAnswer.dto';
 import { createTransport } from 'nodemailer';
+import { AdminEntity } from '../admin/admin.entity';
 
 @Injectable()
 export class ContactService {
@@ -31,11 +32,8 @@ export class ContactService {
     return await this.contactRepository.save(contact);
   }
 
-  async createAnswer(
-    currentUser: UserEntity,
-    createAnswerDto: CreateAnswerDto,
-  ) {
-    if (currentUser.role !== 'ADMIN') {
+  async createAnswer(admin: AdminEntity, createAnswerDto: CreateAnswerDto) {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به پاسخ نیستید',
         HttpStatus.UNAUTHORIZED,
