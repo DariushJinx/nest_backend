@@ -31,37 +31,35 @@ export class CommentController {
 
   @Post('add')
   @UseGuards(AuthGuard)
-  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async createCourse(
     @User() currentUser: UserEntity,
-    @Admin() admin: AdminEntity,
     @Body() createCommentDto: CreateCommentDto,
   ) {
     const comment = await this.commentService.createComment(
       currentUser,
       createCommentDto,
-      admin,
     );
     return await this.commentService.buildCommentResponse(comment);
   }
 
   @Get('list')
   async findAllComments(
-    @User() currentUser: number,
+    @User() currentUser: UserEntity,
     @Query() query: any,
   ): Promise<CommentsResponseInterface> {
     return await this.commentService.findAllComments(currentUser, query);
   }
 
   @Get('tree_comment')
-  async reIndexTreeComment(@User() currentUser: number) {
-    return await this.commentService.reIndexTreeComment(currentUser);
+  @UseGuards(AdminAuthGuard)
+  async reIndexTreeComment(@Admin() admin: AdminEntity) {
+    return await this.commentService.reIndexTreeComment(admin);
   }
 
   @Get('parents')
-  async getParents(@User() currentUser: number) {
-    return await this.commentService.getParents(currentUser);
+  async getParents() {
+    return await this.commentService.getParents();
   }
 
   @Get(':id')
@@ -90,10 +88,10 @@ export class CommentController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
-  async showComment(@Param('id') id: number) {
-    const comment = await this.commentService.showComment(id);
+  async showComment(@Param('id') id: number, @Admin() admin: AdminEntity) {
+    const comment = await this.commentService.showComment(id, admin);
 
     return comment;
   }
