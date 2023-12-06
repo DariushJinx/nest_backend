@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from 'src/product/product.entity';
-import { UserEntity } from 'src/user/user.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import { OffEntity } from './off.entity';
 import { CreateOffDto } from './dto/createOff.dto';
@@ -11,6 +10,7 @@ import { CourseEntity_2 } from 'src/course_2/course_2.entity';
 import { UpdateOffDto } from './dto/updateOff.dto';
 import { GetOneOffDto } from './dto/getOneOff.dto';
 import { SetDiscountOnAllDto } from './dto/setOffAll.dto';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Injectable()
 export class OffService {
@@ -19,20 +19,20 @@ export class OffService {
     private readonly offRepository: Repository<OffEntity>,
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(AdminEntity)
+    private readonly adminRepository: Repository<AdminEntity>,
     @InjectRepository(CourseEntity_2)
     private readonly courseRepository: Repository<CourseEntity_2>,
   ) {}
 
   async createOff(
-    currentUser: UserEntity,
+    admin: AdminEntity,
     createOffDto: CreateOffDto,
   ): Promise<OffEntity> {
     const off = new OffEntity();
 
     Object.assign(off, createOffDto);
-    off.creator = currentUser;
+    off.creator = admin;
     off.uses = 0;
     off.max = +createOffDto.max;
     delete off.creator.password;
@@ -53,10 +53,7 @@ export class OffService {
     return offResult;
   }
 
-  async findAllOffs(
-    currentUser: number,
-    query: any,
-  ): Promise<offsResponseInterface> {
+  async findAllOffs(query: any): Promise<offsResponseInterface> {
     const queryBuilder = this.offRepository
       .createQueryBuilder('off')
       .leftJoinAndSelect('off.creator', 'creator');
@@ -70,7 +67,7 @@ export class OffService {
     }
 
     if (query.username) {
-      const creator = await this.userRepository.findOne({
+      const creator = await this.adminRepository.findOne({
         where: { username: query.username },
       });
       queryBuilder.andWhere('off.creator = :id', {
@@ -86,20 +83,24 @@ export class OffService {
   }
 
   async OffuseUsesForProduct(code: string, getOneOffDto: GetOneOffDto) {
+    const errorResponse = {
+      errors: {},
+    };
+
     const offForProduct = await this.offRepository.findOne({
       where: { code: code, product_id: getOneOffDto.product_id },
     });
 
     if (!offForProduct) {
-      throw new HttpException(
-        'any off for product dose not exist',
-        HttpStatus.NOT_FOUND,
-      );
+      errorResponse.errors['off_product'] =
+        'تخفیفی برای محصول مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     } else if (offForProduct.max === offForProduct.uses) {
-      throw new HttpException(
-        'The limit of use of the desired code is over',
-        HttpStatus.CONFLICT,
-      );
+      errorResponse.errors['off'] =
+        'محدودیت استفاده از کد تخفیف به اتمام رسیده است';
+      errorResponse.errors['statusCode'] = HttpStatus.CONFLICT;
+      throw new HttpException(errorResponse, HttpStatus.CONFLICT);
     } else if (offForProduct) {
       await this.offRepository.update(
         { code: offForProduct.code },
@@ -110,20 +111,23 @@ export class OffService {
   }
 
   async OffuseUsesForCourse(code: string, getOneOffDto: GetOneOffDto) {
+    const errorResponse = {
+      errors: {},
+    };
+
     const offForCourse = await this.offRepository.findOne({
       where: { code: code, course_id: getOneOffDto.course_id },
     });
 
     if (!offForCourse) {
-      throw new HttpException(
-        'any off for course dose not exist',
-        HttpStatus.NOT_FOUND,
-      );
+      errorResponse.errors['off_course'] = 'تخفیفی برای دوره مورد نظر یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     } else if (offForCourse.max === offForCourse.uses) {
-      throw new HttpException(
-        'The limit of use of the desired code is over',
-        HttpStatus.CONFLICT,
-      );
+      errorResponse.errors['off'] =
+        'محدودیت استفاده از کد تخفیف به اتمام رسیده است';
+      errorResponse.errors['statusCode'] = HttpStatus.CONFLICT;
+      throw new HttpException(errorResponse, HttpStatus.CONFLICT);
     } else if (offForCourse) {
       await this.offRepository.update(
         { code: offForCourse.code },
@@ -139,27 +143,28 @@ export class OffService {
       where: { id: id },
     });
     if (!off) {
-      throw new HttpException('any off dose not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('تخفیفی وجود ندارد', HttpStatus.NOT_FOUND);
     }
     return off;
   }
 
-  async updateOff(
-    id: number,
-    currentUserID: number,
-    updateOffDto: UpdateOffDto,
-  ) {
+  async updateOff(id: number, admin: AdminEntity, updateOffDto: UpdateOffDto) {
+    const errorResponse = {
+      errors: {},
+    };
+
     const off = await this.currentOff(id);
 
     if (!off) {
-      throw new HttpException('off does not exist', HttpStatus.NOT_FOUND);
+      errorResponse.errors['off'] = 'تخفیفی یافت نشد';
+      errorResponse.errors['statusCode'] = HttpStatus.NOT_FOUND;
+      throw new HttpException(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    if (off.creator.id !== currentUserID) {
-      throw new HttpException(
-        'شما مجاز به تغییر تخفیف نیستید',
-        HttpStatus.FORBIDDEN,
-      );
+    if (!admin) {
+      errorResponse.errors['off'] = 'شما مجاز به تغییر تخفیف نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.FORBIDDEN;
+      throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     Object.assign(off, updateOffDto);
@@ -181,7 +186,20 @@ export class OffService {
     return offResult;
   }
 
-  async setOffForAllCourses(setDiscountOnAllDto: SetDiscountOnAllDto) {
+  async setOffForAllCourses(
+    setDiscountOnAllDto: SetDiscountOnAllDto,
+    admin: AdminEntity,
+  ) {
+    const errorResponse = {
+      errors: {},
+    };
+
+    if (!admin) {
+      errorResponse.errors['off'] = 'شما مجاز به تغییر تخفیف نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.FORBIDDEN;
+      throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     const courses = await this.courseRepository.find();
 
     courses.forEach((course) => {
@@ -191,7 +209,20 @@ export class OffService {
     await this.courseRepository.save(courses);
   }
 
-  async setOffForAllProducts(setDiscount: SetDiscountOnAllDto) {
+  async setOffForAllProducts(
+    setDiscount: SetDiscountOnAllDto,
+    admin: AdminEntity,
+  ) {
+    const errorResponse = {
+      errors: {},
+    };
+
+    if (!admin) {
+      errorResponse.errors['off'] = 'شما مجاز به تغییر تخفیف نیستید';
+      errorResponse.errors['statusCode'] = HttpStatus.FORBIDDEN;
+      throw new HttpException(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     const products = await this.productRepository.find();
 
     products.forEach((product) => {
@@ -203,17 +234,14 @@ export class OffService {
 
   async deleteOneOffWithID(
     id: number,
-    user: UserEntity,
+    admin: AdminEntity,
   ): Promise<DeleteResult> {
     const off = await this.currentOff(id);
-    const userResult = await this.userRepository.findOne({
-      where: { id: off.creator.id },
-    });
 
     if (!off) {
       throw new HttpException('تخفیف مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (userResult.id !== user.id) {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به حذف تخفیف نیستید',
         HttpStatus.FORBIDDEN,
