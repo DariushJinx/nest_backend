@@ -20,7 +20,6 @@ export class CommentService {
   async createComment(
     currentUser: UserEntity,
     createCommentDto: CreateCommentDto,
-    admin: AdminEntity,
   ): Promise<CommentEntity> {
     if (
       !createCommentDto.blog_id &&
@@ -28,17 +27,13 @@ export class CommentService {
       !createCommentDto.product_id
     ) {
       throw new HttpException(
-        'witch one of product_id and course_id and blog_id is required',
+        'هر کدوم از موارد مربوط به بلاگ یا محصول و یا دوره مورد نیاز می باشد',
         HttpStatus.BAD_REQUEST,
       );
     }
     const newComment = new CommentEntity();
 
     Object.assign(newComment, createCommentDto);
-
-    // if (admin) {
-    //   newComment.user_id = admin;
-    // }else
 
     newComment.user_id = currentUser;
 
@@ -74,9 +69,16 @@ export class CommentService {
   }
 
   async findAllComments(
-    currentUser: number,
+    currentUser: UserEntity,
     query: any,
   ): Promise<CommentsResponseInterface> {
+    if (!currentUser) {
+      throw new HttpException(
+        'شما می بایست عملیات ورود را انجام دهید',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const queryBuilder = this.commentRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.user_id', 'user_id');
@@ -105,7 +107,14 @@ export class CommentService {
     return { comments, commentsCount };
   }
 
-  async reIndexTreeComment(currentUser: number) {
+  async reIndexTreeComment(admin: AdminEntity) {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این قسمت نیستید',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const queryBuilder = this.commentRepository.createQueryBuilder('comment');
 
     queryBuilder.orderBy('comment.id', 'DESC');
@@ -141,7 +150,7 @@ export class CommentService {
     return comments;
   }
 
-  async getParents(currentUser: number) {
+  async getParents() {
     let comments: any;
     await this.commentRepository
       .find({
@@ -199,7 +208,14 @@ export class CommentService {
     return await this.commentRepository.delete({ id });
   }
 
-  async showComment(id: number) {
+  async showComment(id: number, admin: AdminEntity) {
+    if (!admin) {
+      throw new HttpException(
+        'شما مجاز به فعالیت در این قسمت نیستید',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const exsistComment = await this.currentComment(id);
     if (!exsistComment) {
       throw new HttpException('کامنت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
