@@ -18,6 +18,9 @@ import { CreateContactDto } from './dto/createContact.dto';
 import { ContactsResponseInterface } from './types/contactsResponse.interface';
 import { DeleteResult } from 'typeorm';
 import { CreateAnswerDto } from './dto/createAnswer.dto';
+import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
+import { Admin } from 'src/decorators/admin.decorators';
+import { AdminEntity } from 'src/admin/admin.entity';
 
 @Controller('contact')
 export class ContactController {
@@ -38,13 +41,13 @@ export class ContactController {
   }
 
   @Post('answer')
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminAuthGuard)
   @UsePipes(new BackendValidationPipe())
   async createAnswer(
-    @User() currentUser: UserEntity,
+    @Admin() admin: AdminEntity,
     @Body() createAnswerDto: CreateAnswerDto,
   ) {
-    await this.contactService.createAnswer(currentUser, createAnswerDto);
+    await this.contactService.createAnswer(admin, createAnswerDto);
     return {
       message: 'ثبت پاسخ موفقیت آمیز بود',
     };
