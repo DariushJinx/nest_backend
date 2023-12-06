@@ -70,6 +70,14 @@ export class OffService {
       const creator = await this.adminRepository.findOne({
         where: { username: query.username },
       });
+
+      if (!creator) {
+        throw new HttpException(
+          'سازنده تخفیف وجود ندارد',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       queryBuilder.andWhere('off.creator = :id', {
         id: creator.id,
       });
@@ -79,6 +87,15 @@ export class OffService {
 
     const offsCount = await queryBuilder.getCount();
     const offs = await queryBuilder.getMany();
+    offs.forEach((off) => {
+      delete off.creator.id;
+      delete off.creator.first_name;
+      delete off.creator.last_name;
+      delete off.creator.mobile;
+      delete off.creator.isBan;
+      delete off.creator.email;
+      delete off.creator.password;
+    });
     return { offs, offsCount };
   }
 
@@ -145,6 +162,13 @@ export class OffService {
     if (!off) {
       throw new HttpException('تخفیفی وجود ندارد', HttpStatus.NOT_FOUND);
     }
+    delete off.creator.id;
+    delete off.creator.first_name;
+    delete off.creator.last_name;
+    delete off.creator.mobile;
+    delete off.creator.isBan;
+    delete off.creator.email;
+    delete off.creator.password;
     return off;
   }
 
@@ -235,7 +259,9 @@ export class OffService {
   async deleteOneOffWithID(
     id: number,
     admin: AdminEntity,
-  ): Promise<DeleteResult> {
+  ): Promise<{
+    message: string;
+  }> {
     const off = await this.currentOff(id);
 
     if (!off) {
@@ -248,7 +274,11 @@ export class OffService {
       );
     }
 
-    return await this.offRepository.delete({ id });
+    await this.offRepository.delete({ id });
+
+    return {
+      message: 'تخفیف مورد نظر با موفقیت حذف شد',
+    };
   }
 
   async buildOffResponse(off: OffEntity): Promise<OffResponseInterface> {
