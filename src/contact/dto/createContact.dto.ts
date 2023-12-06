@@ -8,7 +8,7 @@ export class CreateContactDto {
   @IsDefined({ message: 'ایمیل ارسالی صحیح نمی باشد' })
   @Expose()
   email: string;
-  @IsDefined({ message: 'متن کوتاه دوره یافت نشد' })
+  @IsDefined({ message: 'شماره تماس ارسالی صحیح نمی باشد' })
   @Expose()
   @IsPhoneNumber('IR')
   @Matches(/^[+]*[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, {
