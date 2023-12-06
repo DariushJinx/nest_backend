@@ -109,7 +109,9 @@ export class OffController {
   async deleteOneOff(
     @Param('id') id: number,
     @Admin() admin: AdminEntity,
-  ): Promise<DeleteResult> {
+  ): Promise<{
+    message: string;
+  }> {
     return await this.offService.deleteOneOffWithID(id, admin);
   }
 }
