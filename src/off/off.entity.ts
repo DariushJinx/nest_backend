@@ -1,4 +1,4 @@
-import { UserEntity } from '../user/user.entity';
+import { AdminEntity } from 'src/admin/admin.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'off' })
@@ -18,8 +18,8 @@ export class OffEntity {
   @Column()
   uses: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.offs, { eager: true })
-  creator: UserEntity;
+  @ManyToOne(() => AdminEntity, (admin) => admin.offs, { eager: true })
+  creator: AdminEntity;
 
   @Column({ nullable: true })
   course_id: number;
