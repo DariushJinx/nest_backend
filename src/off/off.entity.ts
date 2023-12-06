@@ -1,4 +1,4 @@
-import { AdminEntity } from 'src/admin/admin.entity';
+import { AdminEntity } from '../admin/admin.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'off' })

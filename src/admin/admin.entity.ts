@@ -10,7 +10,7 @@ import {
 import { BlogCategoryEntity } from '../blogCategory/blogCategory.entity';
 import { CourseEntity_2 } from '../course_2/course_2.entity';
 import { ProductEntity } from '../product/product.entity';
-import { OffEntity } from 'src/off/off.entity';
+import { OffEntity } from '../off/off.entity';
 
 @Entity({ name: 'admin' })
 export class AdminEntity {
