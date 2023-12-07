@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContactEntity } from './contact.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { CreateContactDto } from './dto/createContact.dto';
 import { ContactResponseInterface } from './types/contactResponse.interface';
@@ -28,6 +28,7 @@ export class ContactService {
     const contact = new ContactEntity();
 
     Object.assign(contact, createContactDto);
+    contact.answer = false;
 
     return await this.contactRepository.save(contact);
   }
@@ -72,10 +73,7 @@ export class ContactService {
     };
   }
 
-  async findAllContacts(
-    currentUser: number,
-    query: any,
-  ): Promise<ContactsResponseInterface> {
+  async findAllContacts(query: any): Promise<ContactsResponseInterface> {
     const queryBuilder = this.contactRepository.createQueryBuilder('contact');
 
     if (query.limit) {
@@ -96,19 +94,41 @@ export class ContactService {
   async deleteOneContact(
     id: number,
     currentUser: UserEntity,
-  ): Promise<DeleteResult> {
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
     const contact = await this.contactRepository.findOne({ where: { id: id } });
     if (!contact) {
       throw new HttpException('ارتباط مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (currentUser.role !== 'ADMIN') {
-      throw new HttpException(
-        'شما مجاز به حذف کامنت نیستید',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    if (currentUser) {
+      if (!currentUser) {
+        throw new HttpException(
+          'شما مجاز به حذف کامنت نیستید',
+          HttpStatus.FORBIDDEN,
+        );
+      }
 
-    return await this.contactRepository.delete({ id });
+      await this.contactRepository.delete({ id });
+
+      return {
+        message: 'درخواست شما با موفقیت حذف شد',
+      };
+    } else if (admin) {
+      if (!admin) {
+        throw new HttpException(
+          'شما مجاز به حذف کامنت نیستید',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      await this.contactRepository.delete({ id });
+
+      return {
+        message: 'درخواست شما با موفقیت حذف شد',
+      };
+    }
   }
 
   async buildContactResponse(
