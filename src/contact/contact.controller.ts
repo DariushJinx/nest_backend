@@ -16,11 +16,11 @@ import { User } from 'src/decorators/user.decorators';
 import { UserEntity } from 'src/user/user.entity';
 import { CreateContactDto } from './dto/createContact.dto';
 import { ContactsResponseInterface } from './types/contactsResponse.interface';
-import { DeleteResult } from 'typeorm';
 import { CreateAnswerDto } from './dto/createAnswer.dto';
 import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
 import { Admin } from 'src/decorators/admin.decorators';
 import { AdminEntity } from 'src/admin/admin.entity';
+import { AuthBothGuard } from 'src/user/guard/bothAuth.guard';
 
 @Controller('contact')
 export class ContactController {
@@ -55,18 +55,24 @@ export class ContactController {
 
   @Get('list')
   async findAllContacts(
-    @User() currentUser: number,
     @Query() query: any,
   ): Promise<ContactsResponseInterface> {
-    return await this.contactService.findAllContacts(currentUser, query);
+    return await this.contactService.findAllContacts(query);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthBothGuard)
   async deleteOneContact(
     @Param('id') id: number,
     @User() currentUser: UserEntity,
-  ): Promise<DeleteResult> {
-    return await this.contactService.deleteOneContact(id, currentUser);
+    @Admin() admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    await this.contactService.deleteOneContact(id, currentUser, admin);
+
+    return {
+      message: 'درخواست شما با موفقیت حذف شد',
+    };
   }
 }
