@@ -16,7 +16,6 @@ import { OffService } from './off.service';
 import { offsResponseInterface } from './types/offsResponse.interface';
 import { OffResponseInterface } from './types/offResponse.interface';
 import { UpdateOffDto } from './dto/updateOff.dto';
-import { DeleteResult } from 'typeorm';
 import { GetOneOffDto } from './dto/getOneOff.dto';
 import { SetDiscountOnAllDto } from './dto/setOffAll.dto';
 import { AdminAuthGuard } from 'src/admin/guard/adminAuth.guard';
@@ -112,6 +111,10 @@ export class OffController {
   ): Promise<{
     message: string;
   }> {
-    return await this.offService.deleteOneOffWithID(id, admin);
+    await this.offService.deleteOneOffWithID(id, admin);
+
+    return {
+      message: 'تخفیف مورد نظر با موفقیت حذف شد',
+    };
   }
 }
