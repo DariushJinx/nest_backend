@@ -14,7 +14,7 @@ export class ContactEntity {
   @Column()
   phone: string;
 
-  @Column({ default: false })
+  @Column()
   answer: boolean;
 
   @Column()
