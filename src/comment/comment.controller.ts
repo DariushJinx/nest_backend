@@ -20,10 +20,10 @@ import { CreateCommentDto } from './dto/createComment.dto';
 import { CommentsResponseInterface } from './types/commentsResponse.interface';
 import { CommentResponseInterface } from './types/commentResponse.interface';
 import { UpdateCommentDto } from './dto/updateComment.dto';
-import { DeleteResult } from 'typeorm';
 import { AdminAuthGuard } from '../admin/guard/adminAuth.guard';
 import { Admin } from 'src/decorators/admin.decorators';
 import { AdminEntity } from 'src/admin/admin.entity';
+import { AuthBothGuard } from 'src/user/guard/bothAuth.guard';
 
 @Controller('comment')
 export class CommentController {
@@ -81,8 +81,7 @@ export class CommentController {
     const comment = await this.commentService.updateComment(
       id,
       currentUserID,
-      updateCommentDto.comment,
-      updateCommentDto.score,
+      updateCommentDto,
     );
     return await this.commentService.buildCommentResponse(comment);
   }
@@ -97,8 +96,18 @@ export class CommentController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
-  async deleteOneProduct(@Param('id') id: number): Promise<DeleteResult> {
-    return await this.commentService.deleteOneComment(id);
+  @UseGuards(AuthBothGuard)
+  async deleteOneProduct(
+    @Param('id') id: number,
+    @User() user: UserEntity,
+    @Admin() admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
+    await this.commentService.deleteOneComment(id, user, admin);
+
+    return {
+      message: 'کامنت مورد نظر با موفقیت حذف شد',
+    };
   }
 }
