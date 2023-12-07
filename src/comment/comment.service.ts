@@ -3,10 +3,11 @@ import { UserEntity } from '../user/user.entity';
 import { CreateCommentDto } from './dto/createComment.dto';
 import { CommentEntity } from './comment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CommentResponseInterface } from './types/commentResponse.interface';
 import { CommentsResponseInterface } from './types/commentsResponse.interface';
 import { AdminEntity } from '../admin/admin.entity';
+import { UpdateCommentDto } from './dto/updateComment.dto';
 
 @Injectable()
 export class CommentService {
@@ -104,6 +105,11 @@ export class CommentService {
 
     const commentsCount = await queryBuilder.getCount();
     const comments = await queryBuilder.getMany();
+
+    comments.forEach((comment) => {
+      delete comment.user_id;
+    });
+
     return { comments, commentsCount };
   }
 
@@ -167,45 +173,86 @@ export class CommentService {
   }
 
   async currentComment(id: number): Promise<CommentEntity> {
-    return await this.commentRepository.findOne({
+    const comment = await this.commentRepository.findOne({
       where: { id: id },
     });
+
+    if (!comment) {
+      throw new HttpException('کامنتی یافت نشد', HttpStatus.NOT_FOUND);
+    }
+
+    delete comment.course_id;
+    delete comment.blog_id;
+    delete comment.product_id;
+    delete comment.user_id.first_name;
+    delete comment.user_id.last_name;
+    delete comment.user_id.mobile;
+    delete comment.user_id.isBan;
+    delete comment.user_id.email;
+    delete comment.user_id.password;
+
+    return comment;
   }
 
   async updateComment(
     id: number,
     currentUserID: number,
-    commentCheck: string,
-    score: number,
+    updateCommentDto: UpdateCommentDto,
   ) {
     const comment = await this.currentComment(id);
 
     if (!comment) {
-      throw new HttpException('comment does not exist', HttpStatus.NOT_FOUND);
+      throw new HttpException('کامنتی یافت  نشد', HttpStatus.NOT_FOUND);
     }
 
     if (comment.user_id.id !== currentUserID) {
-      throw new HttpException('you are not an supplier', HttpStatus.FORBIDDEN);
+      throw new HttpException('شما مجاز نیستید', HttpStatus.FORBIDDEN);
     }
 
-    Object.assign(comment, { commentCheck, score });
+    Object.assign(comment, updateCommentDto);
 
     return await this.commentRepository.save(comment);
   }
 
-  async deleteOneComment(id: number): Promise<DeleteResult> {
+  async deleteOneComment(
+    id: number,
+    user: UserEntity,
+    admin: AdminEntity,
+  ): Promise<{
+    message: string;
+  }> {
     const comment = await this.currentComment(id);
     if (!comment) {
       throw new HttpException('کامنت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (comment.user_id.role !== 'ADMIN') {
-      throw new HttpException(
-        'شما مجاز به حذف کامنت نیستید',
-        HttpStatus.FORBIDDEN,
-      );
-    }
 
-    return await this.commentRepository.delete({ id });
+    if (user) {
+      if (!user) {
+        throw new HttpException(
+          'شما مجاز به حذف کامنت نیستید',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      await this.commentRepository.delete({ id });
+
+      return {
+        message: 'کامنت مورد نظر با موفقیت حذف شد',
+      };
+    } else if (admin) {
+      if (!admin) {
+        throw new HttpException(
+          'شما مجاز به حذف کامنت نیستید',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      await this.commentRepository.delete({ id });
+
+      return {
+        message: 'کامنت مورد نظر با موفقیت حذف شد',
+      };
+    }
   }
 
   async showComment(id: number, admin: AdminEntity) {
@@ -216,23 +263,20 @@ export class CommentService {
       );
     }
 
-    const exsistComment = await this.currentComment(id);
-    if (!exsistComment) {
+    const existComment = await this.currentComment(id);
+    if (!existComment) {
       throw new HttpException('کامنت مورد نظر یافت نشد', HttpStatus.NOT_FOUND);
     }
-    if (exsistComment.user_id.role !== 'ADMIN') {
+    if (!admin) {
       throw new HttpException(
         'شما مجاز به نمایش کامنت نیستید',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    const comment = await this.commentRepository.update(
-      { id: exsistComment.id },
-      { show: 1 },
-    );
+    await this.commentRepository.update({ id: existComment.id }, { show: 1 });
 
-    return comment;
+    return { ...existComment, show: 1 };
   }
 
   async buildCommentResponse(
