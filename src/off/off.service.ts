@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from 'src/product/product.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { OffEntity } from './off.entity';
 import { CreateOffDto } from './dto/createOff.dto';
 import { OffResponseInterface } from './types/offResponse.interface';
@@ -124,6 +124,13 @@ export class OffService {
         { uses: offForProduct.uses + 1 },
       );
     }
+    delete offForProduct.creator.id;
+    delete offForProduct.creator.first_name;
+    delete offForProduct.creator.last_name;
+    delete offForProduct.creator.mobile;
+    delete offForProduct.creator.isBan;
+    delete offForProduct.creator.email;
+    delete offForProduct.creator.password;
     return offForProduct;
   }
 
@@ -152,6 +159,13 @@ export class OffService {
       );
     }
 
+    delete offForCourse.creator.id;
+    delete offForCourse.creator.first_name;
+    delete offForCourse.creator.last_name;
+    delete offForCourse.creator.mobile;
+    delete offForCourse.creator.isBan;
+    delete offForCourse.creator.email;
+    delete offForCourse.creator.password;
     return offForCourse;
   }
 
@@ -271,6 +285,18 @@ export class OffService {
       throw new HttpException(
         'شما مجاز به حذف تخفیف نیستید',
         HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (off.product_id) {
+      await this.productRepository.update(
+        { id: off.product_id },
+        { discount: 0 },
+      );
+    } else if (off.course_id) {
+      await this.courseRepository.update(
+        { id: off.course_id },
+        { discount: 0 },
       );
     }
 
